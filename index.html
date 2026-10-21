@@ -254,4 +254,635 @@
 
   <!-- PANTALLA 4: productos -->
   <section id="vista-productos" hidden>
-    <div cla
+    <div class="encabezado">
+      <h1>Productos</h1>
+      <button class="secundario js-salir" type="button">Salir</button>
+    </div>
+
+    <form id="form-agregar" class="panel">
+      <h2>Agregar producto</h2>
+      <label for="nombre">Nombre</label>
+      <input id="nombre" type="text" autocomplete="off" required>
+      <div class="fila">
+        <div>
+          <label for="precio">Precio</label>
+          <input id="precio" type="number" inputmode="decimal" min="0" step="any" required>
+        </div>
+        <div>
+          <label for="cantidad">Cantidad</label>
+          <input id="cantidad" type="number" inputmode="numeric" min="0" step="1" required>
+        </div>
+      </div>
+      <button class="grande" type="submit" id="btn-guardar">Guardar producto</button>
+      <p id="msg-agregar" class="mensaje" role="status"></p>
+    </form>
+
+    <div class="panel">
+      <label for="buscar">Buscar producto</label>
+      <input id="buscar" type="search" autocomplete="off">
+      <ul id="lista" class="lista"></ul>
+      <p id="msg-lista" class="mensaje" role="status"></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Barra de abajo -->
+<div id="pie" hidden>
+  <div id="barra-cobro" hidden>
+    <div class="pie-interior">
+      <div>
+        <div id="cobro-detalle"></div>
+        <div id="cobro-total"></div>
+      </div>
+      <button type="button" id="btn-cobrar">Cobrar</button>
+    </div>
+  </div>
+  <nav class="pie-interior">
+    <button type="button" id="nav-vender" class="secundario">Vender</button>
+    <button type="button" id="nav-clientes" class="secundario">Clientes</button>
+    <button type="button" id="nav-productos" class="secundario">Productos</button>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  // ---------- 1. Conexión con tu base de datos ----------
+  // Estos dos datos son públicos; la seguridad la dan los permisos que ya configuraste.
+  const SUPABASE_URL = "https://vyrpnkbvurbueugpuwak.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_zMYMbcXO528BkfF1DEKwKw_S5DmUrRf";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ---------- 2. Elementos y datos de la página ----------
+  const $ = (id) => document.getElementById(id);
+  const vistaLogin = $("vista-login");
+  const vistas = {
+    vender: $("vista-vender"),
+    clientes: $("vista-clientes"),
+    productos: $("vista-productos"),
+  };
+
+  let productos = [];         // la lista que viene de la base de datos
+  let clientes = [];          // clientes con lo que deben
+  let carrito = {};           // la venta en curso: { idProducto: cantidad }
+  let aCredito = false;       // ¿la venta en curso es a crédito?
+  let abonandoId = null;      // cliente al que se le está capturando un abono
+  let vistaActual = "vender"; // pantalla que se está viendo
+
+  const dinero = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+  const redondear = (n) => Math.round(Number(n) * 100) / 100;
+
+  // ---------- 3. Mostrar una pantalla u otra ----------
+  function mostrar(sesionActiva) {
+    vistaLogin.hidden = sesionActiva;
+    $("pie").hidden = !sesionActiva;
+
+    if (sesionActiva) {
+      irA(vistaActual);
+      cargarProductos();
+      cargarClientes();
+    } else {
+      for (const nombre in vistas) vistas[nombre].hidden = true;
+      carrito = {};
+      abonandoId = null;
+    }
+  }
+
+  function irA(nombre) {
+    vistaActual = nombre;
+    for (const clave in vistas) {
+      vistas[clave].hidden = clave !== nombre;
+      $("nav-" + clave).classList.toggle("activo", clave === nombre);
+    }
+    actualizarCobro();
+    window.scrollTo(0, 0);
+  }
+
+  $("nav-vender").addEventListener("click", () => irA("vender"));
+  $("nav-clientes").addEventListener("click", () => irA("clientes"));
+  $("nav-productos").addEventListener("click", () => irA("productos"));
+
+  function aviso(idElemento, texto, tipo) {
+    const el = $(idElemento);
+    el.textContent = texto || "";
+    el.className = "mensaje" + (tipo ? " " + tipo : "");
+  }
+
+  // ---------- 4. Entrar y salir ----------
+  $("form-login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const boton = $("btn-entrar");
+    boton.disabled = true;
+    aviso("msg-login", "");
+
+    const { error } = await db.auth.signInWithPassword({
+      email: $("correo").value.trim(),
+      password: $("clave").value,
+    });
+
+    boton.disabled = false;
+    if (error) {
+      aviso("msg-login", "Correo o contraseña incorrectos. Revísalos e intenta otra vez.", "error");
+    }
+    // Si todo sale bien, onAuthStateChange (abajo) cambia la pantalla solo.
+  });
+
+  document.querySelectorAll(".js-salir").forEach((boton) => {
+    boton.addEventListener("click", async () => {
+      await db.auth.signOut();
+    });
+  });
+
+  db.auth.onAuthStateChange((_evento, sesion) => {
+    // setTimeout evita que Supabase se trabe al hacer otras consultas aquí dentro.
+    setTimeout(() => mostrar(Boolean(sesion)), 0);
+  });
+
+  // ---------- 5. Leer productos ----------
+  async function cargarProductos() {
+    const { data, error } = await db
+      .from("productos")
+      .select("id, nombre, precio, cantidad")
+      .order("nombre", { ascending: true });
+
+    if (error) {
+      aviso("msg-lista", "No se pudo cargar la lista. Revisa tu internet e intenta otra vez.", "error");
+      return;
+    }
+    aviso("msg-lista", "");
+    productos = data;
+
+    // Si el inventario cambió, ajustamos la venta en curso para no pasarnos.
+    for (const id of Object.keys(carrito)) {
+      const p = productos.find((x) => String(x.id) === id);
+      if (!p || p.cantidad <= 0) {
+        delete carrito[id];
+      } else if (carrito[id] > p.cantidad) {
+        carrito[id] = p.cantidad;
+      }
+    }
+
+    pintarLista();
+    pintarVender();
+    actualizarCobro();
+  }
+
+  // Lista de la pantalla "Productos"
+  function pintarLista() {
+    const texto = $("buscar").value.trim().toLowerCase();
+    const visibles = productos.filter((p) => p.nombre.toLowerCase().includes(texto));
+    const lista = $("lista");
+    lista.replaceChildren();
+
+    if (visibles.length === 0) {
+      const vacio = document.createElement("li");
+      vacio.className = "vacio";
+      vacio.textContent = productos.length === 0
+        ? "Aún no hay productos. Agrega el primero arriba."
+        : "No hay productos con ese nombre.";
+      lista.appendChild(vacio);
+      return;
+    }
+
+    for (const p of visibles) {
+      const li = document.createElement("li");
+      li.className = "producto";
+
+      const izquierda = document.createElement("div");
+      const nombre = document.createElement("div");
+      nombre.className = "nombre";
+      nombre.textContent = p.nombre;
+      const detalle = document.createElement("div");
+      detalle.className = "detalle";
+      detalle.textContent = "Quedan " + p.cantidad;
+      izquierda.append(nombre, detalle);
+
+      const precio = document.createElement("div");
+      precio.className = "precio";
+      precio.textContent = dinero.format(p.precio);
+
+      li.append(izquierda, precio);
+      lista.appendChild(li);
+    }
+  }
+
+  $("buscar").addEventListener("input", pintarLista);
+
+  // ---------- 6. Agregar un producto ----------
+  $("form-agregar").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const boton = $("btn-guardar");
+    boton.disabled = true;
+    aviso("msg-agregar", "");
+
+    const { error } = await db.from("productos").insert({
+      nombre: $("nombre").value.trim(),
+      precio: Number($("precio").value),
+      cantidad: parseInt($("cantidad").value, 10),
+    });
+
+    boton.disabled = false;
+    if (error) {
+      aviso("msg-agregar", "No se pudo guardar el producto. Intenta otra vez.", "error");
+      return;
+    }
+
+    $("form-agregar").reset();
+    aviso("msg-agregar", "Producto guardado ✓", "ok");
+    $("nombre").focus();
+    cargarProductos();
+  });
+
+  // ---------- 7. Pantalla de vender ----------
+  function cambiarCantidad(id, cambio, maximo) {
+    const nueva = (carrito[id] || 0) + cambio;
+    if (nueva <= 0) {
+      delete carrito[id];
+    } else {
+      carrito[id] = Math.min(nueva, maximo);
+    }
+    aviso("msg-venta", "");
+    pintarVender();
+    actualizarCobro();
+  }
+
+  function pintarVender() {
+    const texto = $("buscar-venta").value.trim().toLowerCase();
+    const visibles = productos.filter((p) => p.nombre.toLowerCase().includes(texto));
+    const lista = $("lista-venta");
+    lista.replaceChildren();
+
+    if (visibles.length === 0) {
+      const vacio = document.createElement("li");
+      vacio.className = "vacio";
+      vacio.textContent = productos.length === 0
+        ? "Aún no hay productos. Agrégalos en la pestaña Productos."
+        : "No hay productos con ese nombre.";
+      lista.appendChild(vacio);
+      return;
+    }
+
+    for (const p of visibles) {
+      const li = document.createElement("li");
+      li.className = "producto";
+
+      const izquierda = document.createElement("div");
+      const nombre = document.createElement("div");
+      nombre.className = "nombre";
+      nombre.textContent = p.nombre;
+      const detalle = document.createElement("div");
+      detalle.className = "detalle";
+      detalle.textContent = dinero.format(p.precio) + " · Quedan " + p.cantidad;
+      izquierda.append(nombre, detalle);
+
+      const derecha = document.createElement("div");
+      const enCarrito = carrito[p.id] || 0;
+
+      if (p.cantidad <= 0) {
+        derecha.className = "agotado";
+        derecha.textContent = "Agotado";
+      } else if (enCarrito === 0) {
+        const agregar = document.createElement("button");
+        agregar.type = "button";
+        agregar.textContent = "Agregar";
+        agregar.addEventListener("click", () => cambiarCantidad(p.id, 1, p.cantidad));
+        derecha.appendChild(agregar);
+      } else {
+        derecha.className = "cantidad";
+
+        const menos = document.createElement("button");
+        menos.type = "button";
+        menos.className = "paso secundario";
+        menos.textContent = "−";
+        menos.setAttribute("aria-label", "Quitar uno de " + p.nombre);
+        menos.addEventListener("click", () => cambiarCantidad(p.id, -1, p.cantidad));
+
+        const num = document.createElement("span");
+        num.className = "num";
+        num.textContent = enCarrito;
+
+        const mas = document.createElement("button");
+        mas.type = "button";
+        mas.className = "paso";
+        mas.textContent = "+";
+        mas.setAttribute("aria-label", "Agregar uno de " + p.nombre);
+        mas.disabled = enCarrito >= p.cantidad;
+        mas.addEventListener("click", () => cambiarCantidad(p.id, 1, p.cantidad));
+
+        derecha.append(menos, num, mas);
+      }
+
+      li.append(izquierda, derecha);
+      lista.appendChild(li);
+    }
+  }
+
+  $("buscar-venta").addEventListener("input", pintarVender);
+
+  // Contado o a crédito
+  function ponerTipoDePago(credito) {
+    aCredito = credito;
+    $("pago-contado").classList.toggle("secundario", credito);
+    $("pago-credito").classList.toggle("secundario", !credito);
+    $("pago-contado").setAttribute("aria-pressed", String(!credito));
+    $("pago-credito").setAttribute("aria-pressed", String(credito));
+    $("bloque-cliente").hidden = !credito;
+    aviso("msg-venta", "");
+    actualizarCobro();
+  }
+
+  $("pago-contado").addEventListener("click", () => ponerTipoDePago(false));
+  $("pago-credito").addEventListener("click", () => ponerTipoDePago(true));
+
+  function llenarSelectClientes() {
+    const sel = $("sel-cliente");
+    const actual = sel.value;
+    sel.replaceChildren();
+
+    const base = document.createElement("option");
+    base.value = "";
+    base.textContent = "Elige un cliente";
+    sel.appendChild(base);
+
+    for (const c of clientes) {
+      const opcion = document.createElement("option");
+      opcion.value = String(c.id);
+      opcion.textContent = c.nombre + (c.saldo > 0 ? " (debe " + dinero.format(c.saldo) + ")" : "");
+      sel.appendChild(opcion);
+    }
+
+    sel.value = actual;
+    $("sin-clientes").hidden = clientes.length > 0;
+  }
+
+  function calcularCarrito() {
+    let total = 0;
+    let cantidadTotal = 0;
+    const items = [];
+    for (const p of productos) {
+      const q = carrito[p.id];
+      if (q > 0) {
+        total += p.precio * q;
+        cantidadTotal += q;
+        items.push({ producto_id: p.id, cantidad: q });
+      }
+    }
+    return { total: redondear(total), cantidadTotal, items };
+  }
+
+  function actualizarCobro() {
+    const { total, cantidadTotal } = calcularCarrito();
+    $("barra-cobro").hidden = !(cantidadTotal > 0 && vistaActual === "vender");
+    $("cobro-detalle").textContent =
+      cantidadTotal + (cantidadTotal === 1 ? " artículo" : " artículos") + (aCredito ? " · A crédito" : "");
+    $("cobro-total").textContent = dinero.format(total);
+  }
+    // ---------- 8. Cobrar ----------
+  $("btn-cobrar").addEventListener("click", async () => {
+    const { total, items } = calcularCarrito();
+    if (items.length === 0) return;
+
+    const clienteId = $("sel-cliente").value ? Number($("sel-cliente").value) : null;
+    if (aCredito && !clienteId) {
+      aviso("msg-venta", "Elige un cliente para vender a crédito.", "error");
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    const cliente = clientes.find((c) => c.id === clienteId);
+    const pregunta = aCredito
+      ? "¿Cobrar " + dinero.format(total) + " a crédito a " + cliente.nombre + "?"
+      : "¿Cobrar " + dinero.format(total) + "?";
+    if (!window.confirm(pregunta)) return;
+
+    const boton = $("btn-cobrar");
+    boton.disabled = true;
+    aviso("msg-venta", "");
+
+    // Esta función de Supabase guarda la venta y descuenta el inventario en un solo paso.
+    const { error } = await db.rpc("registrar_venta", {
+      items,
+      p_cliente_id: aCredito ? clienteId : null,
+      p_a_credito: aCredito,
+    });
+    boton.disabled = false;
+
+    if (error) {
+      const conocido = /inventario|no encontrado|cliente/i.test(error.message || "");
+      aviso(
+        "msg-venta",
+        conocido
+          ? error.message + ". Revisa la venta e intenta otra vez."
+          : "No se pudo registrar la venta. Revisa tu internet e intenta otra vez.",
+        "error"
+      );
+      await cargarProductos();
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    carrito = {};
+    $("buscar-venta").value = "";
+    const detalleCredito = aCredito ? " (a crédito a " + cliente.nombre + ")" : "";
+    $("sel-cliente").value = "";
+    ponerTipoDePago(false);
+    aviso("msg-venta", "Venta guardada ✓ Total: " + dinero.format(total) + detalleCredito, "ok");
+    await Promise.all([cargarProductos(), cargarClientes()]);
+    window.scrollTo(0, 0);
+  });
+
+  // ---------- 9. Clientes y abonos ----------
+  async function cargarClientes() {
+    const { data, error } = await db
+      .from("saldo_clientes")
+      .select("id, nombre, telefono, saldo")
+      .order("nombre", { ascending: true });
+
+    if (error) {
+      aviso("msg-clientes", "No se pudo cargar la lista de clientes. Revisa tu internet e intenta otra vez.", "error");
+      return;
+    }
+    clientes = data.map((c) => ({ ...c, saldo: redondear(c.saldo) }));
+    pintarClientes();
+    llenarSelectClientes();
+  }
+
+  function pintarClientes() {
+    const texto = $("buscar-cliente").value.trim().toLowerCase();
+    const visibles = clientes.filter((c) => c.nombre.toLowerCase().includes(texto));
+    const lista = $("lista-clientes");
+    lista.replaceChildren();
+
+    const porCobrar = redondear(clientes.reduce((suma, c) => suma + (c.saldo > 0 ? c.saldo : 0), 0));
+    $("total-por-cobrar").textContent = "Total por cobrar: " + dinero.format(porCobrar);
+
+    if (visibles.length === 0) {
+      const vacio = document.createElement("li");
+      vacio.className = "vacio";
+      vacio.textContent = clientes.length === 0
+        ? "Aún no hay clientes. Agrega el primero arriba."
+        : "No hay clientes con ese nombre.";
+      lista.appendChild(vacio);
+      return;
+    }
+
+    for (const c of visibles) {
+      const li = document.createElement("li");
+      li.className = "cliente";
+
+      const fila = document.createElement("div");
+      fila.className = "fila-cliente";
+
+      const izquierda = document.createElement("div");
+      const nombre = document.createElement("div");
+      nombre.className = "nombre";
+      nombre.textContent = c.nombre;
+      const detalle = document.createElement("div");
+      detalle.className = "detalle";
+      detalle.textContent = c.telefono || "Sin teléfono";
+      izquierda.append(nombre, detalle);
+
+      const derecha = document.createElement("div");
+      derecha.className = "derecha-cliente";
+      const saldo = document.createElement("div");
+      saldo.className = "saldo " + (c.saldo > 0 ? "debe" : "limpio");
+      saldo.textContent = c.saldo > 0 ? "Debe " + dinero.format(c.saldo) : "Sin deuda";
+      derecha.appendChild(saldo);
+
+      if (c.saldo > 0) {
+        const abonar = document.createElement("button");
+        abonar.type = "button";
+        abonar.className = "secundario";
+        abonar.textContent = "Abonar";
+        abonar.addEventListener("click", () => {
+          abonandoId = abonandoId === c.id ? null : c.id;
+          aviso("msg-clientes", "");
+          pintarClientes();
+        });
+        derecha.appendChild(abonar);
+      }
+
+      fila.append(izquierda, derecha);
+      li.appendChild(fila);
+
+      if (abonandoId === c.id && c.saldo > 0) {
+        li.appendChild(crearFormularioAbono(c));
+      }
+
+      lista.appendChild(li);
+    }
+  }
+
+  function crearFormularioAbono(c) {
+    const form = document.createElement("form");
+    form.className = "abono-form";
+
+    const etiqueta = document.createElement("label");
+    etiqueta.htmlFor = "monto-abono";
+    etiqueta.textContent = "¿Cuánto abona?";
+
+    const campo = document.createElement("input");
+    campo.id = "monto-abono";
+    campo.type = "number";
+    campo.inputMode = "decimal";
+    campo.min = "0";
+    campo.step = "any";
+    campo.required = true;
+
+    const botones = document.createElement("div");
+    botones.className = "fila";
+
+    const guardar = document.createElement("button");
+    guardar.type = "submit";
+    guardar.textContent = "Guardar abono";
+
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.className = "secundario";
+    cancelar.textContent = "Cancelar";
+    cancelar.addEventListener("click", () => {
+      abonandoId = null;
+      pintarClientes();
+    });
+
+    botones.append(guardar, cancelar);
+    form.append(etiqueta, campo, botones);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const monto = redondear(campo.value);
+
+      if (!(monto > 0)) {
+        aviso("msg-clientes", "Escribe una cantidad mayor a cero.", "error");
+        return;
+      }
+      if (monto > c.saldo) {
+        aviso("msg-clientes", c.nombre + " debe " + dinero.format(c.saldo) + ". El abono no puede ser mayor.", "error");
+        return;
+      }
+
+      guardar.disabled = true;
+      const { error } = await db.from("abonos").insert({ cliente_id: c.id, monto });
+      guardar.disabled = false;
+
+      if (error) {
+        aviso("msg-clientes", "No se pudo guardar el abono. Intenta otra vez.", "error");
+        return;
+      }
+
+      const nuevoSaldo = redondear(c.saldo - monto);
+      abonandoId = null;
+      await cargarClientes();
+      aviso(
+        "msg-clientes",
+        "Abono guardado ✓ " + (nuevoSaldo > 0
+          ? c.nombre + " ahora debe " + dinero.format(nuevoSaldo) + "."
+          : c.nombre + " ya no debe nada."),
+        "ok"
+      );
+      window.scrollTo(0, 0);
+    });
+
+    setTimeout(() => campo.focus(), 0);
+    return form;
+  }
+
+  $("buscar-cliente").addEventListener("input", pintarClientes);
+
+  $("form-cliente").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const boton = $("btn-cliente");
+    boton.disabled = true;
+    aviso("msg-clientes", "");
+
+    const telefono = $("cliente-telefono").value.trim();
+    const { error } = await db.from("clientes").insert({
+      nombre: $("cliente-nombre").value.trim(),
+      telefono: telefono || null,
+    });
+
+    boton.disabled = false;
+    if (error) {
+      aviso("msg-clientes", "No se pudo guardar el cliente. Intenta otra vez.", "error");
+      return;
+    }
+
+    $("form-cliente").reset();
+    await cargarClientes();
+    aviso("msg-clientes", "Cliente guardado ✓", "ok");
+  });
+
+  // ---------- 10. Mantener la información al día ----------
+  // Cuando vuelves a abrir la app, se recarga todo para ver lo que hizo la otra persona.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !$("pie").hidden) {
+      cargarProductos();
+      cargarClientes();
+    }
+  });
+
+  // ---------- 11. Al abrir la página ----------
+  db.auth.getSession().then(({ data }) => mostrar(Boolean(data.session)));
+</script>
+</body>
+</html>
