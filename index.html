@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
+<link rel="stylesheet" href="vender.css?v=1">
 </head>
 <body>
 <main>
@@ -40,6 +41,29 @@
     <p id="msg-venta" class="mensaje" role="status"></p>
 
     <div class="panel">
+      <label for="buscar-venta">Buscar producto</label>
+      <input id="buscar-venta" type="search" autocomplete="off">
+      <div id="cuadricula" class="cuadricula"></div>
+    </div>
+  </section>
+
+  <!-- PANTALLA 2b: carrito -->
+  <section id="vista-carrito" hidden>
+    <div class="encabezado">
+      <h1>Carrito</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-carrito">Seguir</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+    <p id="msg-carrito" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <ul id="lista-carrito" class="lista"></ul>
+      <div class="total-grande"><span>Total</span><strong id="carrito-total"></strong></div>
+    </div>
+
+    <div class="panel">
       <h2>¿Cómo paga?</h2>
       <div class="fila">
         <button type="button" id="pago-contado" aria-pressed="true">Contado</button>
@@ -52,11 +76,7 @@
       </div>
     </div>
 
-    <div class="panel">
-      <label for="buscar-venta">Buscar producto</label>
-      <input id="buscar-venta" type="search" autocomplete="off">
-      <ul id="lista-venta" class="lista"></ul>
-    </div>
+    <button class="grande" type="button" id="btn-cobrar">Cobrar</button>
   </section>
 
   <!-- PANTALLA 3: clientes -->
@@ -88,24 +108,31 @@
   <section id="vista-productos" hidden>
     <div class="encabezado">
       <h1>Productos</h1>
-      <button class="secundario js-salir" type="button">Salir</button>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="ir-comprar">Por comprar</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
     </div>
     <p id="msg-editar" class="mensaje" role="status"></p>
 
     <form id="form-agregar" class="panel">
       <h2>Agregar producto</h2>
+      <label for="foto">Foto (opcional)</label>
+      <input id="foto" type="file" accept="image/*">
       <label for="nombre">Nombre</label>
       <input id="nombre" type="text" autocomplete="off" required>
       <div class="fila">
         <div>
           <label for="precio">Precio</label>
-          <input id="precio" type="number" inputmode="decimal" min="0" step="any" required>
+          <input id="precio" type="number" inputmode="numeric" min="0" step="1" required>
         </div>
         <div>
           <label for="cantidad">Cantidad</label>
           <input id="cantidad" type="number" inputmode="numeric" min="0" step="1" required>
         </div>
       </div>
+      <label for="minimo">Inventario mínimo (opcional)</label>
+      <input id="minimo" type="number" inputmode="numeric" min="0" step="1">
       <button class="grande" type="submit" id="btn-guardar">Guardar producto</button>
       <p id="msg-agregar" class="mensaje" role="status"></p>
     </form>
@@ -115,6 +142,23 @@
       <input id="buscar" type="search" autocomplete="off">
       <ul id="lista" class="lista"></ul>
       <p id="msg-lista" class="mensaje" role="status"></p>
+    </div>
+  </section>
+
+  <!-- PANTALLA 4b: por comprar -->
+  <section id="vista-comprar" hidden>
+    <div class="encabezado">
+      <h1>Por comprar</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-comprar">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+    <p id="msg-comprar" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <button class="grande secundario" type="button" id="copiar-lista" style="margin-bottom: 1rem;">Copiar lista</button>
+      <ul id="lista-comprar" class="lista"></ul>
     </div>
   </section>
 
@@ -160,7 +204,7 @@
         <div id="cobro-detalle"></div>
         <div id="cobro-total"></div>
       </div>
-      <button type="button" id="btn-cobrar">Cobrar</button>
+      <button type="button" id="btn-ver-carrito">Ver carrito</button>
     </div>
   </div>
   <nav class="pie-interior">
@@ -172,9 +216,11 @@
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=2"></script>
-<script src="ventas.js?v=1"></script>
-<script src="clientes.js?v=1"></script>
+<script src="app.js?v=3"></script>
+<script src="productos.js?v=1"></script>
+<script src="ventas.js?v=3"></script>
+<script src="clientes.js?v=3"></script>
+<script src="comprar.js?v=1"></script>
 <script src="historial.js?v=1"></script>
 <script src="inicio.js?v=1"></script>
 </body>
