@@ -1,0 +1,90 @@
+/* Fotos de productos */
+.foto, .foto-chica {
+  background: #E6EFF1;
+  color: var(--acento);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.foto { width: 100%; aspect-ratio: 1 / 1; font-size: 2.5rem; }
+.foto-chica { width: 3.5rem; height: 3.5rem; flex: none; font-size: 1.5rem; }
+.foto img, .foto-chica img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.con-foto { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+
+/* Cuadrícula para elegir productos */
+.cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.75rem;
+}
+.tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-height: 0;
+  padding: 0.5rem;
+  text-align: left;
+  background: #fff;
+  color: var(--texto);
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+}
+.tarjeta:hover { background: #F5F9F9; }
+.tarjeta.elegida { border-color: var(--acento); background: #EAF4F6; }
+.t-nombre {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  min-height: 2.4em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.t-precio { color: var(--acento); font-size: 1.1rem; }
+.insignia {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.45rem;
+  border-radius: 1.1rem;
+  background: var(--acento);
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* Carrito */
+.controles-carrito {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+.total-grande {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid var(--borde);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  font-size: 1.5rem;
+}
+
+/* Inventario bajo o negativo */
+.inv-bajo { color: var(--error); font-weight: 700; }
+
+/* Botones de cada cliente */
+.acciones-fila { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
+.acciones-fila button { min-height: 2.75rem; padding: 0.35rem 0.9rem; }
