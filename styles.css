@@ -1,0 +1,177 @@
+:root {
+  --fondo: #F2F5F4;
+  --superficie: #FFFFFF;
+  --texto: #12222B;
+  --apagado: #46565F;
+  --acento: #0B5C6B;
+  --acento-oscuro: #08444F;
+  --borde: #B9C6CC;
+  --error: #A61B1B;
+  --ok: #17663F;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 20px; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height: 1.4;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem 1rem 10rem;
+}
+
+[hidden] { display: none !important; }
+
+h1 { font-size: 1.6rem; margin: 0; }
+h2 { font-size: 1.2rem; margin: 0 0 0.75rem; }
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.panel {
+  background: var(--superficie);
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+input, select {
+  width: 100%;
+  min-height: 3rem;
+  font: inherit;
+  color: var(--texto);
+  background: #fff;
+  border: 2px solid var(--borde);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.fila { display: flex; gap: 0.75rem; }
+.fila > div { flex: 1; min-width: 0; }
+
+button {
+  font: inherit;
+  font-weight: 700;
+  min-height: 3.25rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: 2px solid var(--acento);
+  background: var(--acento);
+  color: #fff;
+  cursor: pointer;
+}
+button:hover { background: var(--acento-oscuro); }
+button.grande { width: 100%; }
+button.secundario { background: #fff; color: var(--acento); }
+button.secundario:hover { background: #E6EFF1; }
+button.peligro { background: #fff; color: var(--error); border-color: var(--error); }
+button.peligro:hover { background: #FBEAEA; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+:focus-visible {
+  outline: 4px solid #F2B705;
+  outline-offset: 2px;
+}
+
+.mensaje { min-height: 1.5rem; margin: 0.75rem 0 0; font-weight: 700; }
+.mensaje.error { color: var(--error); }
+.mensaje.ok { color: var(--ok); }
+
+.lista { list-style: none; margin: 0; padding: 0; }
+.vacio { color: var(--apagado); padding: 0.5rem 0; }
+
+/* Filas de la lista de vender */
+.producto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-top: 2px solid var(--borde);
+}
+.producto:first-child { border-top: 0; }
+.nombre { font-weight: 700; font-size: 1.1rem; overflow-wrap: anywhere; }
+.detalle { color: var(--apagado); }
+
+.cantidad { display: flex; align-items: center; gap: 0.5rem; }
+.cantidad .num { min-width: 2rem; text-align: center; font-weight: 700; font-size: 1.3rem; }
+.cantidad button.paso { min-width: 3.25rem; padding: 0.5rem; font-size: 1.4rem; }
+.agotado { color: var(--error); font-weight: 700; }
+
+/* Filas de productos y clientes (con formulario que se abre debajo) */
+.item { padding: 0.9rem 0; border-top: 2px solid var(--borde); }
+.item:first-child { border-top: 0; }
+.fila-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.derecha-item { display: flex; flex-direction: column; align-items: flex-end; }
+.precio, .saldo {
+  font-weight: 700;
+  font-size: 1.2rem;
+  white-space: nowrap;
+  text-align: right;
+  margin-bottom: 0.4rem;
+}
+.saldo.debe { color: var(--error); }
+.saldo.limpio { color: var(--ok); margin-bottom: 0; }
+.total-cobrar { font-weight: 700; font-size: 1.2rem; margin: 0 0 1rem; }
+
+.subform {
+  margin-top: 0.9rem;
+  padding: 1rem;
+  background: var(--fondo);
+  border-radius: 8px;
+}
+.subform .fila { margin-top: 0.25rem; }
+.subform button.peligro { margin-top: 0.75rem; }
+
+/* Barra de abajo: cobrar y navegación */
+#pie {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-top: 2px solid var(--borde);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pie-interior {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+}
+#barra-cobro { background: var(--acento); color: #fff; }
+#barra-cobro .pie-interior { justify-content: space-between; }
+#cobro-total { font-weight: 700; font-size: 1.5rem; line-height: 1.2; }
+#barra-cobro button { background: #fff; color: var(--acento); border-color: #fff; min-width: 8rem; }
+#barra-cobro button:hover { background: #E6EFF1; }
+nav.pie-interior { gap: 0.5rem; }
+nav button { flex: 1; padding: 0.5rem 0.25rem; font-size: 0.9rem; }
+nav button.activo { background: var(--acento); color: #fff; }
