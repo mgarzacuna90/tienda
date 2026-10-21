@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=1">
+<link rel="stylesheet" href="historial.css?v=1">
 </head>
 <body>
 <main>
@@ -31,7 +32,10 @@
   <section id="vista-vender" hidden>
     <div class="encabezado">
       <h1>Vender</h1>
-      <button class="secundario js-salir" type="button">Salir</button>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="ir-historial">Historial</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
     </div>
     <p id="msg-venta" class="mensaje" role="status"></p>
 
@@ -114,6 +118,38 @@
     </div>
   </section>
 
+  <!-- PANTALLA 5: historial -->
+  <section id="vista-historial" hidden>
+    <div class="encabezado">
+      <h1>Historial</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-historial">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+    <p id="msg-historial" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <label for="fecha-historial">Día</label>
+      <input id="fecha-historial" type="date">
+      <div class="resumen-fila"><span>Ventas (<span id="res-num">0</span>)</span><strong id="res-total"></strong></div>
+      <div class="resumen-fila"><span>De contado</span><strong id="res-contado"></strong></div>
+      <div class="resumen-fila"><span>A crédito</span><strong id="res-credito"></strong></div>
+      <div class="resumen-fila"><span>Abonos recibidos</span><strong id="res-abonos"></strong></div>
+      <div class="resumen-fila destacado"><span>Dinero recibido</span><strong id="res-recibido"></strong></div>
+    </div>
+
+    <div class="panel">
+      <h2>Ventas</h2>
+      <ul id="lista-ventas-dia" class="lista"></ul>
+    </div>
+
+    <div class="panel">
+      <h2>Abonos</h2>
+      <ul id="lista-abonos-dia" class="lista"></ul>
+    </div>
+  </section>
+
 </main>
 
 <!-- Barra de abajo -->
@@ -136,9 +172,10 @@
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=1"></script>
+<script src="app.js?v=2"></script>
 <script src="ventas.js?v=1"></script>
 <script src="clientes.js?v=1"></script>
+<script src="historial.js?v=1"></script>
 <script src="inicio.js?v=1"></script>
 </body>
 </html>
