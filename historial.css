@@ -1,0 +1,19 @@
+.acciones-encabezado { display: flex; gap: 0.5rem; }
+.acciones-encabezado button { padding: 0.5rem 0.9rem; }
+
+.resumen-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+}
+.resumen-fila strong { white-space: nowrap; }
+.resumen-fila.destacado {
+  border-top: 2px solid var(--borde);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  font-size: 1.2rem;
+}
+
+.item .linea { color: var(--apagado); margin-top: 0.25rem; }
+.etiqueta-credito { color: var(--error); font-weight: 700; }
