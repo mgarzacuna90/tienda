@@ -13,6 +13,7 @@ const vistas = {
   vender: $("vista-vender"),
   clientes: $("vista-clientes"),
   productos: $("vista-productos"),
+  historial: $("vista-historial"),
 };
 
 let productos = [];         // lista de productos que viene de la base de datos
@@ -51,9 +52,12 @@ function mostrar(sesionActiva) {
 
 function irA(nombre) {
   vistaActual = nombre;
+  // El historial se abre desde Vender, así que deja marcada esa pestaña.
+  const pestana = nombre === "historial" ? "vender" : nombre;
   for (const clave in vistas) {
     vistas[clave].hidden = clave !== nombre;
-    $("nav-" + clave).classList.toggle("activo", clave === nombre);
+    const boton = $("nav-" + clave);
+    if (boton) boton.classList.toggle("activo", clave === pestana);
   }
   actualizarCobro();
   window.scrollTo(0, 0);
