@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B5C6B">
+<title>Mi tienda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo: #F2F5F4;
+    --superficie: #FFFFFF;
+    --texto: #12222B;
+    --apagado: #46565F;
+    --acento: #0B5C6B;
+    --acento-oscuro: #08444F;
+    --borde: #B9C6CC;
+    --error: #A61B1B;
+    --ok: #17663F;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { font-size: 20px; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.4;
+  }
+
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1rem 1rem 3rem;
+  }
+
+  [hidden] { display: none !important; }
+
+  h1 { font-size: 1.6rem; margin: 0; }
+  h2 { font-size: 1.2rem; margin: 0 0 0.75rem; }
+
+  .encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0 1rem;
+  }
+
+  .panel {
+    background: var(--superficie);
+    border: 2px solid var(--borde);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  label {
+    display: block;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+  }
+
+  input {
+    width: 100%;
+    min-height: 3rem;
+    font: inherit;
+    color: var(--texto);
+    background: #fff;
+    border: 2px solid var(--borde);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .fila { display: flex; gap: 0.75rem; }
+  .fila > div { flex: 1; min-width: 0; }
+
+  button {
+    font: inherit;
+    font-weight: 700;
+    min-height: 3.25rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: 2px solid var(--acento);
+    background: var(--acento);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: var(--acento-oscuro); }
+  button.grande { width: 100%; }
+  button.secundario { background: #fff; color: var(--acento); }
+  button.secundario:hover { background: #E6EFF1; }
+  button:disabled { opacity: 0.6; cursor: wait; }
+
+  :focus-visible {
+    outline: 4px solid #F2B705;
+    outline-offset: 2px;
+  }
+
+  .mensaje { min-height: 1.5rem; margin: 0.75rem 0 0; font-weight: 700; }
+  .mensaje.error { color: var(--error); }
+  .mensaje.ok { color: var(--ok); }
+
+  #lista { list-style: none; margin: 0; padding: 0; }
+
+  .producto {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-top: 2px solid var(--borde);
+  }
+  .producto:first-child { border-top: 0; }
+  .producto .nombre { font-weight: 700; font-size: 1.1rem; overflow-wrap: anywhere; }
+  .producto .detalle { color: var(--apagado); }
+  .producto .precio { font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
+
+  .vacio { color: var(--apagado); padding: 0.5rem 0; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- PANTALLA 1: entrar -->
+  <section id="vista-login" hidden>
+    <div class="encabezado"><h1>Mi tienda</h1></div>
+    <form id="form-login" class="panel">
+      <h2>Entrar</h2>
+      <label for="correo">Correo</label>
+      <input id="correo" type="email" autocomplete="username" required>
+      <label for="clave">Contraseña</label>
+      <input id="clave" type="password" autocomplete="current-password" required>
+      <button class="grande" type="submit" id="btn-entrar">Entrar</button>
+      <p id="msg-login" class="mensaje" role="status"></p>
+    </form>
+  </section>
+
+  <!-- PANTALLA 2: productos -->
+  <section id="vista-productos" hidden>
+    <div class="encabezado">
+      <h1>Productos</h1>
+      <button class="secundario" type="button" id="btn-salir">Salir</button>
+    </div>
+
+    <form id="form-agregar" class="panel">
+      <h2>Agregar producto</h2>
+      <label for="nombre">Nombre</label>
+      <input id="nombre" type="text" autocomplete="off" required>
+      <div class="fila">
+        <div>
+          <label for="precio">Precio</label>
+          <input id="precio" type="number" inputmode="decimal" min="0" step="any" required>
+        </div>
+        <div>
+          <label for="cantidad">Cantidad</label>
+          <input id="cantidad" type="number" inputmode="numeric" min="0" step="1" required>
+        </div>
+      </div>
+      <button class="grande" type="submit" id="btn-guardar">Guardar producto</button>
+      <p id="msg-agregar" class="mensaje" role="status"></p>
+    </form>
+
+    <div class="panel">
+      <label for="buscar">Buscar producto</label>
+      <input id="buscar" type="search" autocomplete="off">
+      <ul id="lista"></ul>
+      <p id="msg-lista" class="mensaje" role="status"></p>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  // ---------- 1. Conexión con tu base de datos ----------
+  // Estos dos datos son públicos; la seguridad la dan los permisos que ya configuraste.
+  const SUPABASE_URL = "https://vyrpnkbvurbueugpuwak.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_zMYMbcXO528BkfF1DEKwKw_S5DmUrRf";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ---------- 2. Elementos de la página ----------
+  const $ = (id) => document.getElementById(id);
+  const vistaLogin = $("vista-login");
+  const vistaProductos = $("vista-productos");
+
+  let productos = []; // aquí guardamos la lista que viene de la base de datos
+
+  const dinero = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+
+  // ---------- 3. Mostrar una pantalla u otra ----------
+  function mostrar(sesionActiva) {
+    vistaLogin.hidden = sesionActiva;
+    vistaProductos.hidden = !sesionActiva;
+    if (sesionActiva) cargarProductos();
+  }
+
+  function aviso(idElemento, texto, tipo) {
+    const el = $(idElemento);
+    el.textContent = texto || "";
+    el.className = "mensaje" + (tipo ? " " + tipo : "");
+  }
+
+  // ---------- 4. Entrar y salir ----------
+  $("form-login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const boton = $("btn-entrar");
+    boton.disabled = true;
+    aviso("msg-login", "");
+
+    const { error } = await db.auth.signInWithPassword({
+      email: $("correo").value.trim(),
+      password: $("clave").value,
+    });
+
+    boton.disabled = false;
+    if (error) {
+      aviso("msg-login", "Correo o contraseña incorrectos. Revísalos e intenta otra vez.", "error");
+    }
+    // Si todo sale bien, onAuthStateChange (abajo) cambia la pantalla solo.
+  });
+
+  $("btn-salir").addEventListener("click", async () => {
+    await db.auth.signOut();
+  });
+
+  db.auth.onAuthStateChange((_evento, sesion) => {
+    mostrar(Boolean(sesion));
+  });
+
+  // ---------- 5. Leer productos ----------
+  async function cargarProductos() {
+    const { data, error } = await db
+      .from("productos")
+      .select("id, nombre, precio, cantidad")
+      .order("nombre", { ascending: true });
+
+    if (error) {
+      aviso("msg-lista", "No se pudo cargar la lista. Revisa tu internet e intenta otra vez.", "error");
+      return;
+    }
+    aviso("msg-lista", "");
+    productos = data;
+    pintarLista();
+  }
+
+  function pintarLista() {
+    const texto = $("buscar").value.trim().toLowerCase();
+    const visibles = productos.filter((p) => p.nombre.toLowerCase().includes(texto));
+    const lista = $("lista");
+    lista.replaceChildren();
+
+    if (visibles.length === 0) {
+      const vacio = document.createElement("li");
+      vacio.className = "vacio";
+      vacio.textContent = productos.length === 0
+        ? "Aún no hay productos. Agrega el primero arriba."
+        : "No hay productos con ese nombre.";
+      lista.appendChild(vacio);
+      return;
+    }
+
+    for (const p of visibles) {
+      const li = document.createElement("li");
+      li.className = "producto";
+
+      const izquierda = document.createElement("div");
+      const nombre = document.createElement("div");
+      nombre.className = "nombre";
+      nombre.textContent = p.nombre;
+      const detalle = document.createElement("div");
+      detalle.className = "detalle";
+      detalle.textContent = "Quedan " + p.cantidad;
+      izquierda.append(nombre, detalle);
+
+      const precio = document.createElement("div");
+      precio.className = "precio";
+      precio.textContent = dinero.format(p.precio);
+
+      li.append(izquierda, precio);
+      lista.appendChild(li);
+    }
+  }
+
+  $("buscar").addEventListener("input", pintarLista);
+
+  // ---------- 6. Agregar un producto ----------
+  $("form-agregar").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const boton = $("btn-guardar");
+    boton.disabled = true;
+    aviso("msg-agregar", "");
+
+    const { error } = await db.from("productos").insert({
+      nombre: $("nombre").value.trim(),
+      precio: Number($("precio").value),
+      cantidad: parseInt($("cantidad").value, 10),
+    });
+
+    boton.disabled = false;
+    if (error) {
+      aviso("msg-agregar", "No se pudo guardar el producto. Intenta otra vez.", "error");
+      return;
+    }
+
+    $("form-agregar").reset();
+    aviso("msg-agregar", "Producto guardado ✓", "ok");
+    $("nombre").focus();
+    cargarProductos();
+  });
+
+  // ---------- 7. Mantener la información al día ----------
+  // Cuando vuelves a abrir la app, se recarga la lista para ver lo que agregó la otra persona.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !vistaProductos.hidden) cargarProductos();
+  });
+
+  // ---------- 8. Al abrir la página ----------
+  db.auth.getSession().then(({ data }) => mostrar(Boolean(data.session)));
+</script>
+</body>
+  </html>
