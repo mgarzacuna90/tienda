@@ -16,11 +16,34 @@ function actualizarTarjeta(tarjeta, cantidad) {
   tarjeta.classList.toggle("elegida", cantidad > 0);
 }
 
+function crearTarjeta(p) {
+  const tarjeta = document.createElement("button");
+  tarjeta.type = "button";
+  tarjeta.className = "tarjeta";
+  tarjeta.id = "tarjeta-" + p.id;
+  tarjeta.setAttribute("aria-label", "Agregar " + p.nombre);
+
+  const nombre = document.createElement("div");
+  nombre.className = "t-nombre";
+  nombre.textContent = p.nombre;
+  const precio = document.createElement("div");
+  precio.className = "t-precio";
+  precio.textContent = dinero.format(p.precio);
+
+  tarjeta.append(crearMiniatura(p, "foto"), nombre, precio);
+  actualizarTarjeta(tarjeta, carrito[p.id] || 0);
+  tarjeta.addEventListener("click", () => cambiarCantidad(p.id, 1));
+  return tarjeta;
+}
+
 function pintarVender() {
+  const destacados = $("destacados");
   const cuadricula = $("cuadricula");
+  destacados.replaceChildren();
   cuadricula.replaceChildren();
 
   if (productos.length === 0) {
+    destacados.hidden = true;
     const vacio = document.createElement("p");
     vacio.className = "vacio";
     vacio.style.gridColumn = "1 / -1";
@@ -28,26 +51,26 @@ function pintarVender() {
     cuadricula.appendChild(vacio);
     return;
   }
+  destacados.hidden = false;
 
-  for (const p of productos) {
-    const tarjeta = document.createElement("button");
-    tarjeta.type = "button";
-    tarjeta.className = "tarjeta";
-    tarjeta.id = "tarjeta-" + p.id;
-    tarjeta.setAttribute("aria-label", "Agregar " + p.nombre);
+  // Los 9 primeros: cada producto con lugar fijo va en su lugar;
+  // los huecos se llenan con los demás en orden alfabético.
+  const fijos = new Map(productos.filter((p) => p.posicion).map((p) => [p.posicion, p]));
+  const libres = productos.filter((p) => !p.posicion);
 
-    const nombre = document.createElement("div");
-    nombre.className = "t-nombre";
-    nombre.textContent = p.nombre;
-    const precio = document.createElement("div");
-    precio.className = "t-precio";
-    precio.textContent = dinero.format(p.precio);
-
-    tarjeta.append(crearMiniatura(p, "foto"), nombre, precio);
-    actualizarTarjeta(tarjeta, carrito[p.id] || 0);
-    tarjeta.addEventListener("click", () => cambiarCantidad(p.id, 1));
-    cuadricula.appendChild(tarjeta);
+  for (let lugar = 1; lugar <= 9; lugar++) {
+    const p = fijos.get(lugar) || libres.shift();
+    if (p) {
+      destacados.appendChild(crearTarjeta(p));
+    } else {
+      const hueco = document.createElement("div");
+      hueco.className = "hueco";
+      destacados.appendChild(hueco);
+    }
   }
+
+  // El resto, en orden alfabético
+  for (const p of libres) cuadricula.appendChild(crearTarjeta(p));
 }
 
 function cambiarCantidad(id, cambio) {
