@@ -7,3 +7,59 @@
 
 /* Botón para eliminar una venta o un abono en el historial */
 .btn-mov { margin-top: 0.6rem; min-height: 2.75rem; }
+
+/* Los 9 productos principales de Vender: caben en una sola pantalla */
+.destacados {
+  height: calc(100vh - 16rem);
+  height: calc(100dvh - 16rem);
+  min-height: 21rem;
+  max-height: 44rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.destacados .tarjeta { height: 100%; }
+.destacados .foto { flex: 1; min-height: 0; aspect-ratio: auto; }
+.destacados + .cuadricula { margin-top: 0.5rem; }
+.hueco { border: 2px dashed var(--borde); border-radius: 10px; }
+
+/* Encabezado más bajo en Vender, y sin espacio cuando no hay mensaje */
+.encabezado-chico { padding: 0.25rem 0 0.5rem; }
+.encabezado-chico button { min-height: 2.6rem; padding: 0.3rem 0.9rem; }
+#msg-venta:empty { display: none; }
+
+/* Lo que solo ve el dueño */
+body.rol-vendedor .solo-dueno { display: none !important; }
+
+/* Pantallas de administración más compactas (solo para el dueño) */
+body:not(.rol-vendedor) .admin h1 { font-size: 1.25rem; }
+body:not(.rol-vendedor) .admin h2 { font-size: 1rem; }
+body:not(.rol-vendedor) .admin .encabezado { padding: 0.25rem 0 0.6rem; }
+body:not(.rol-vendedor) .admin button {
+  min-height: 2.4rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+}
+body:not(.rol-vendedor) .admin input,
+body:not(.rol-vendedor) .admin select {
+  min-height: 2.4rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+body:not(.rol-vendedor) .admin label { font-size: 0.85rem; }
+body:not(.rol-vendedor) .admin .panel { padding: 0.7rem; margin-bottom: 0.8rem; }
+body:not(.rol-vendedor) .admin .subform { padding: 0.7rem; }
+body:not(.rol-vendedor) .admin .item { padding: 0.5rem 0; }
+body:not(.rol-vendedor) .admin .nombre { font-size: 0.95rem; }
+body:not(.rol-vendedor) .admin .detalle,
+body:not(.rol-vendedor) .admin .linea { font-size: 0.8rem; }
+body:not(.rol-vendedor) .admin .precio,
+body:not(.rol-vendedor) .admin .saldo { font-size: 0.95rem; margin-bottom: 0.2rem; }
+body:not(.rol-vendedor) .admin .foto-chica { width: 2.5rem; height: 2.5rem; font-size: 1.1rem; }
+body:not(.rol-vendedor) .admin .acciones-fila { margin-top: 0.5rem; }
+body:not(.rol-vendedor) .admin .acciones-fila button { min-height: 2.2rem; }
+body:not(.rol-vendedor) .admin .mensaje { font-size: 0.85rem; margin-top: 0.4rem; }
+body:not(.rol-vendedor) .admin .total-cobrar { font-size: 1rem; margin-bottom: 0.6rem; }
+body:not(.rol-vendedor) .admin .total-grande { font-size: 1.2rem; }
