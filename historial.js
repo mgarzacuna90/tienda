@@ -28,7 +28,7 @@ async function cargarHistorial() {
   const [ventasRes, abonosRes] = await Promise.all([
     db
       .from("ventas")
-      .select("id, created_at, total, a_credito, clientes(nombre), venta_items(nombre, precio, cantidad)")
+      .select("id, created_at, total, a_credito, usuario_email, clientes(nombre), venta_items(nombre, precio, cantidad)")
       .gte("created_at", inicio)
       .lt("created_at", fin)
       .order("created_at", { ascending: false }),
@@ -96,6 +96,12 @@ function pintarHistorial(ventas, abonos) {
       ? "A crédito" + (v.clientes ? " · " + v.clientes.nombre : "")
       : "Contado";
     izquierda.append(titulo, tipo);
+    if (v.usuario_email) {
+      const quien = document.createElement("div");
+      quien.className = "detalle";
+      quien.textContent = "Vendió: " + v.usuario_email;
+      izquierda.appendChild(quien);
+    }
 
     const monto = document.createElement("div");
     monto.className = "precio";
