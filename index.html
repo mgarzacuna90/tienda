@@ -11,9 +11,9 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
-<link rel="stylesheet" href="extras.css?v=1">
+<link rel="stylesheet" href="extras.css?v=2">
 </head>
-<body>
+<body class="rol-vendedor">
 <main>
 
   <!-- PANTALLA 1: entrar -->
@@ -32,16 +32,17 @@
 
   <!-- PANTALLA 2: vender -->
   <section id="vista-vender" hidden>
-    <div class="encabezado">
+    <div class="encabezado encabezado-chico">
       <h1>Vender</h1>
       <div class="acciones-encabezado">
-        <button class="secundario" type="button" id="ir-historial">Historial</button>
+        <button class="secundario solo-dueno" type="button" id="ir-historial">Historial</button>
         <button class="secundario js-salir" type="button">Salir</button>
       </div>
     </div>
     <p id="msg-venta" class="mensaje" role="status"></p>
 
     <div class="panel compacto">
+      <div id="destacados" class="destacados"></div>
       <div id="cuadricula" class="cuadricula"></div>
     </div>
   </section>
@@ -79,28 +80,26 @@
   </section>
 
   <!-- PANTALLA 3: clientes -->
-  <section id="vista-clientes" hidden>
+  <section id="vista-clientes" class="admin" hidden>
     <div class="encabezado">
       <h1>Clientes</h1>
       <button class="secundario js-salir" type="button">Salir</button>
     </div>
-    <div class="barra-acciones">
+    <div class="barra-acciones solo-dueno">
       <button class="secundario" type="button" id="ir-nuevo-cliente">Nuevo cliente</button>
       <button class="secundario" type="button" id="ir-editar-cliente">Editar cliente</button>
     </div>
     <p id="msg-clientes" class="mensaje" role="status"></p>
 
     <div class="panel">
-      <p class="total-cobrar" id="total-por-cobrar"></p>
-      <button class="grande secundario" type="button" id="ir-pago" style="margin-bottom: 1rem;">Datos de pago para cobrar</button>
-      <label for="buscar-cliente">Buscar cliente</label>
-      <input id="buscar-cliente" type="search" autocomplete="off">
+      <p class="total-cobrar solo-dueno" id="total-por-cobrar"></p>
+      <button class="grande secundario solo-dueno" type="button" id="ir-pago" style="margin-bottom: 1rem;">Datos de pago para cobrar</button>
       <ul id="lista-clientes" class="lista"></ul>
     </div>
   </section>
 
   <!-- PANTALLA 3b: nuevo cliente -->
-  <section id="vista-nuevo-cliente" hidden>
+  <section id="vista-nuevo-cliente" class="admin" hidden>
     <div class="encabezado">
       <h1>Nuevo cliente</h1>
       <div class="acciones-encabezado">
@@ -118,7 +117,7 @@
   </section>
 
   <!-- PANTALLA 3b2: editar cliente -->
-  <section id="vista-editar-cliente" hidden>
+  <section id="vista-editar-cliente" class="admin" hidden>
     <div class="encabezado">
       <h1>Editar cliente</h1>
       <div class="acciones-encabezado">
@@ -142,7 +141,7 @@
   </section>
 
   <!-- PANTALLA 3c: estado de cuenta de un cliente -->
-  <section id="vista-cuenta" hidden>
+  <section id="vista-cuenta" class="admin" hidden>
     <div class="encabezado">
       <h1>Cuenta</h1>
       <div class="acciones-encabezado">
@@ -165,7 +164,7 @@
   </section>
 
   <!-- PANTALLA 3d: datos de pago -->
-  <section id="vista-pago" hidden>
+  <section id="vista-pago" class="admin" hidden>
     <div class="encabezado">
       <h1>Datos de pago</h1>
       <div class="acciones-encabezado">
@@ -190,7 +189,7 @@
   </section>
 
   <!-- PANTALLA 4: productos -->
-  <section id="vista-productos" hidden>
+  <section id="vista-productos" class="admin" hidden>
     <div class="encabezado">
       <h1>Productos</h1>
       <button class="secundario js-salir" type="button">Salir</button>
@@ -210,7 +209,7 @@
   </section>
 
   <!-- PANTALLA 4a: nuevo producto -->
-  <section id="vista-nuevo-producto" hidden>
+  <section id="vista-nuevo-producto" class="admin" hidden>
     <div class="encabezado">
       <h1>Nuevo producto</h1>
       <div class="acciones-encabezado">
@@ -242,7 +241,7 @@
   </section>
 
   <!-- PANTALLA 4b: por comprar -->
-  <section id="vista-comprar" hidden>
+  <section id="vista-comprar" class="admin" hidden>
     <div class="encabezado">
       <h1>Por comprar</h1>
       <div class="acciones-encabezado">
@@ -311,19 +310,19 @@
   <nav class="pie-interior">
     <button type="button" id="nav-vender" class="secundario">Vender</button>
     <button type="button" id="nav-clientes" class="secundario">Clientes</button>
-    <button type="button" id="nav-productos" class="secundario">Productos</button>
+    <button type="button" id="nav-productos" class="secundario solo-dueno">Productos</button>
   </nav>
 </div>
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=5"></script>
-<script src="productos.js?v=2"></script>
-<script src="ventas.js?v=4"></script>
-<script src="clientes.js?v=5"></script>
+<script src="app.js?v=6"></script>
+<script src="productos.js?v=3"></script>
+<script src="ventas.js?v=5"></script>
+<script src="clientes.js?v=6"></script>
 <script src="cuenta.js?v=1"></script>
 <script src="comprar.js?v=2"></script>
-<script src="historial.js?v=2"></script>
+<script src="historial.js?v=3"></script>
 <script src="inicio.js?v=1"></script>
 </body>
 </html>
