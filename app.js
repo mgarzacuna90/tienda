@@ -16,6 +16,9 @@ const vistas = {
   productos: $("vista-productos"),
   comprar: $("vista-comprar"),
   historial: $("vista-historial"),
+  nuevocliente: $("vista-nuevo-cliente"),
+  cuenta: $("vista-cuenta"),
+  pago: $("vista-pago"),
 };
 
 // Qué pestaña de abajo queda marcada en cada pantalla
@@ -24,6 +27,9 @@ const PESTANA = {
   carrito: "vender",
   historial: "vender",
   clientes: "clientes",
+  nuevocliente: "clientes",
+  cuenta: "clientes",
+  pago: "clientes",
   productos: "productos",
   comprar: "productos",
 };
@@ -72,6 +78,7 @@ function mostrar(sesionActiva) {
     irA(vistaActual);
     cargarProductos();
     cargarClientes();
+    cargarPago();
   } else {
     for (const nombre in vistas) vistas[nombre].hidden = true;
     carrito = {};
