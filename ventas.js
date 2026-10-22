@@ -17,23 +17,19 @@ function actualizarTarjeta(tarjeta, cantidad) {
 }
 
 function pintarVender() {
-  const texto = $("buscar-venta").value.trim().toLowerCase();
-  const visibles = productos.filter((p) => p.nombre.toLowerCase().includes(texto));
   const cuadricula = $("cuadricula");
   cuadricula.replaceChildren();
 
-  if (visibles.length === 0) {
+  if (productos.length === 0) {
     const vacio = document.createElement("p");
     vacio.className = "vacio";
     vacio.style.gridColumn = "1 / -1";
-    vacio.textContent = productos.length === 0
-      ? "Aún no hay productos. Agrégalos en la pestaña Productos."
-      : "No hay productos con ese nombre.";
+    vacio.textContent = "Aún no hay productos. Agrégalos en la pestaña Productos.";
     cuadricula.appendChild(vacio);
     return;
   }
 
-  for (const p of visibles) {
+  for (const p of productos) {
     const tarjeta = document.createElement("button");
     tarjeta.type = "button";
     tarjeta.className = "tarjeta";
@@ -53,8 +49,6 @@ function pintarVender() {
     cuadricula.appendChild(tarjeta);
   }
 }
-
-$("buscar-venta").addEventListener("input", pintarVender);
 
 function cambiarCantidad(id, cambio) {
   const nueva = Math.max(0, (carrito[id] || 0) + cambio);
@@ -259,7 +253,6 @@ $("btn-cobrar").addEventListener("click", async () => {
 
   const detalleCredito = aCredito ? " (a crédito a " + cliente.nombre + ")" : "";
   carrito = {};
-  $("buscar-venta").value = "";
   $("sel-cliente").value = "";
   ponerTipoDePago(false);
   irA("vender");
