@@ -17,6 +17,8 @@ const vistas = {
   comprar: $("vista-comprar"),
   historial: $("vista-historial"),
   nuevocliente: $("vista-nuevo-cliente"),
+  editarcliente: $("vista-editar-cliente"),
+  nuevoproducto: $("vista-nuevo-producto"),
   cuenta: $("vista-cuenta"),
   pago: $("vista-pago"),
 };
@@ -28,9 +30,11 @@ const PESTANA = {
   historial: "vender",
   clientes: "clientes",
   nuevocliente: "clientes",
+  editarcliente: "clientes",
   cuenta: "clientes",
   pago: "clientes",
   productos: "productos",
+  nuevoproducto: "productos",
   comprar: "productos",
 };
 
@@ -38,8 +42,9 @@ let productos = [];         // lista de productos que viene de la base de datos
 let clientes = [];          // clientes con lo que deben
 let carrito = {};           // la venta en curso: { idProducto: cantidad }
 let aCredito = false;       // ¿la venta en curso es a crédito?
-let clienteAbierto = null;  // cliente con formulario abierto: { id, modo: "abono" | "editar" }
+let abonandoId = null;      // cliente al que se le captura un abono
 let editandoId = null;      // producto que se está editando
+let compras = {};           // cantidades escritas en "Por comprar": { idProducto: texto }
 let vistaActual = "vender"; // pantalla que se está viendo
 
 // Pesos enteros, sin centavos
@@ -82,7 +87,8 @@ function mostrar(sesionActiva) {
   } else {
     for (const nombre in vistas) vistas[nombre].hidden = true;
     carrito = {};
-    clienteAbierto = null;
+    compras = {};
+    abonandoId = null;
     editandoId = null;
   }
 }
