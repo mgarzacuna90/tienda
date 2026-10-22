@@ -3,7 +3,7 @@
 async function cargarClientes() {
   const { data, error } = await db
     .from("saldo_clientes")
-    .select("id, nombre, telefono, saldo")
+    .select("id, nombre, saldo")
     .order("nombre", { ascending: true });
 
   if (error) {
@@ -35,7 +35,7 @@ function pintarClientes() {
     const vacio = document.createElement("li");
     vacio.className = "vacio";
     vacio.textContent = clientes.length === 0
-      ? "Aún no hay clientes. Agrega el primero arriba."
+      ? "Aún no hay clientes. Toca Nuevo cliente para agregar el primero."
       : "No hay clientes con ese nombre.";
     lista.appendChild(vacio);
     return;
@@ -48,26 +48,27 @@ function pintarClientes() {
     const fila = document.createElement("div");
     fila.className = "fila-item";
 
-    const izquierda = document.createElement("div");
     const nombre = document.createElement("div");
     nombre.className = "nombre";
     nombre.textContent = c.nombre;
-    const detalle = document.createElement("div");
-    detalle.className = "detalle";
-    detalle.textContent = c.telefono || "Sin teléfono";
-    izquierda.append(nombre, detalle);
 
-    const derecha = document.createElement("div");
-    derecha.className = "derecha-item";
     const saldo = document.createElement("div");
     saldo.className = "saldo " + (c.saldo > 0 ? "debe" : "limpio");
     saldo.textContent = c.saldo > 0 ? "Debe " + dinero.format(c.saldo) : "Sin deuda";
-    derecha.appendChild(saldo);
+
+    fila.append(nombre, saldo);
+    li.appendChild(fila);
+
+    const abierto = clienteAbierto && clienteAbierto.id === c.id ? clienteAbierto.modo : null;
 
     const acciones = document.createElement("div");
     acciones.className = "acciones-fila";
 
-    const abierto = clienteAbierto && clienteAbierto.id === c.id ? clienteAbierto.modo : null;
+    const cuenta = document.createElement("button");
+    cuenta.type = "button";
+    cuenta.textContent = "Cuenta";
+    cuenta.addEventListener("click", () => abrirCuenta(c));
+    acciones.appendChild(cuenta);
 
     if (c.saldo > 0) {
       const abonar = document.createElement("button");
@@ -85,9 +86,7 @@ function pintarClientes() {
     editar.addEventListener("click", () => abrirCliente(c.id, "editar"));
     acciones.appendChild(editar);
 
-    derecha.appendChild(acciones);
-    fila.append(izquierda, derecha);
-    li.appendChild(fila);
+    li.appendChild(acciones);
 
     if (abierto === "abono" && c.saldo > 0) li.appendChild(crearFormularioAbono(c));
     if (abierto === "editar") li.appendChild(crearFormularioCliente(c));
@@ -177,10 +176,6 @@ function crearFormularioCliente(c) {
   nombre.input.required = true;
   nombre.input.autocomplete = "off";
 
-  const telefono = crearCampo("Teléfono (opcional)", "edit-cliente-telefono", "tel", c.telefono || "");
-  telefono.input.inputMode = "tel";
-  telefono.input.autocomplete = "off";
-
   const botones = document.createElement("div");
   botones.className = "fila";
 
@@ -203,11 +198,7 @@ function crearFormularioCliente(c) {
   eliminar.className = "peligro grande";
   eliminar.textContent = "Eliminar cliente";
 
-  form.append(
-    nombre.etiqueta, nombre.input,
-    telefono.etiqueta, telefono.input,
-    botones, eliminar
-  );
+  form.append(nombre.etiqueta, nombre.input, botones, eliminar);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -219,10 +210,7 @@ function crearFormularioCliente(c) {
     }
 
     guardar.disabled = true;
-    const { error } = await db
-      .from("clientes")
-      .update({ nombre: nuevoNombre, telefono: telefono.input.value.trim() || null })
-      .eq("id", c.id);
+    const { error } = await db.from("clientes").update({ nombre: nuevoNombre }).eq("id", c.id);
     guardar.disabled = false;
 
     if (error) {
@@ -270,26 +258,33 @@ function crearFormularioCliente(c) {
 
 $("buscar-cliente").addEventListener("input", pintarClientes);
 
-// ---------- Agregar un cliente nuevo ----------
+// ---------- Pantalla "Nuevo cliente" ----------
+$("ir-nuevo-cliente").addEventListener("click", () => {
+  $("form-cliente").reset();
+  aviso("msg-nuevo-cliente", "");
+  irA("nuevocliente");
+});
+
+$("volver-nuevo-cliente").addEventListener("click", () => irA("clientes"));
+
 $("form-cliente").addEventListener("submit", async (e) => {
   e.preventDefault();
   const boton = $("btn-cliente");
   boton.disabled = true;
-  aviso("msg-clientes", "");
+  aviso("msg-nuevo-cliente", "");
 
-  const telefono = $("cliente-telefono").value.trim();
   const { error } = await db.from("clientes").insert({
     nombre: $("cliente-nombre").value.trim(),
-    telefono: telefono || null,
   });
 
   boton.disabled = false;
   if (error) {
-    aviso("msg-clientes", "No se pudo guardar el cliente. Intenta otra vez.", "error");
+    aviso("msg-nuevo-cliente", "No se pudo guardar el cliente. Intenta otra vez.", "error");
     return;
   }
 
   $("form-cliente").reset();
+  irA("clientes");
   await cargarClientes();
   aviso("msg-clientes", "Cliente guardado ✓", "ok");
 });
