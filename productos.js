@@ -109,7 +109,7 @@ function pintarLista() {
     const vacio = document.createElement("li");
     vacio.className = "vacio";
     vacio.textContent = productos.length === 0
-      ? "Aún no hay productos. Agrega el primero arriba."
+      ? "Aún no hay productos. Toca Nuevo producto para agregar el primero."
       : "No hay productos con ese nombre.";
     lista.appendChild(vacio);
     return;
@@ -361,7 +361,16 @@ $("form-agregar").addEventListener("submit", async (e) => {
   }
 
   $("form-agregar").reset();
-  aviso("msg-agregar", "Producto guardado ✓", "ok");
+  aviso("msg-agregar", "Producto guardado ✓ Puedes agregar otro.", "ok");
   $("nombre").focus();
   cargarProductos();
 });
+
+// ---------- Pantalla "Nuevo producto" ----------
+$("ir-nuevo-producto").addEventListener("click", () => {
+  $("form-agregar").reset();
+  aviso("msg-agregar", "");
+  irA("nuevoproducto");
+});
+
+$("volver-nuevo-producto").addEventListener("click", () => irA("productos"));
