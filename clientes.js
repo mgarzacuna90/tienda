@@ -17,25 +17,21 @@ async function cargarClientes() {
 }
 
 function pintarClientes() {
-  const texto = $("buscar-cliente").value.trim().toLowerCase();
-  const visibles = clientes.filter((c) => c.nombre.toLowerCase().includes(texto));
   const lista = $("lista-clientes");
   lista.replaceChildren();
 
   const porCobrar = clientes.reduce((suma, c) => suma + (c.saldo > 0 ? c.saldo : 0), 0);
   $("total-por-cobrar").textContent = "Total por cobrar: " + dinero.format(porCobrar);
 
-  if (visibles.length === 0) {
+  if (clientes.length === 0) {
     const vacio = document.createElement("li");
     vacio.className = "vacio";
-    vacio.textContent = clientes.length === 0
-      ? "Aún no hay clientes. Toca Nuevo cliente para agregar el primero."
-      : "No hay clientes con ese nombre.";
+    vacio.textContent = "Aún no hay clientes.";
     lista.appendChild(vacio);
     return;
   }
 
-  for (const c of visibles) {
+  for (const c of clientes) {
     const li = document.createElement("li");
     li.className = "item";
 
@@ -54,7 +50,7 @@ function pintarClientes() {
     li.appendChild(fila);
 
     const acciones = document.createElement("div");
-    acciones.className = "acciones-fila";
+    acciones.className = "acciones-fila solo-dueno";
 
     const cuenta = document.createElement("button");
     cuenta.type = "button";
@@ -82,8 +78,6 @@ function pintarClientes() {
     lista.appendChild(li);
   }
 }
-
-$("buscar-cliente").addEventListener("input", pintarClientes);
 
 // ---------- Abonos ----------
 function crearFormularioAbono(c) {
