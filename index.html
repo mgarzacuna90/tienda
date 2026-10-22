@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
+<link rel="stylesheet" href="extras.css?v=1">
 </head>
 <body>
 <main>
@@ -81,10 +82,11 @@
   <section id="vista-clientes" hidden>
     <div class="encabezado">
       <h1>Clientes</h1>
-      <div class="acciones-encabezado">
-        <button class="secundario" type="button" id="ir-nuevo-cliente">Nuevo cliente</button>
-        <button class="secundario js-salir" type="button">Salir</button>
-      </div>
+      <button class="secundario js-salir" type="button">Salir</button>
+    </div>
+    <div class="barra-acciones">
+      <button class="secundario" type="button" id="ir-nuevo-cliente">Nuevo cliente</button>
+      <button class="secundario" type="button" id="ir-editar-cliente">Editar cliente</button>
     </div>
     <p id="msg-clientes" class="mensaje" role="status"></p>
 
@@ -113,6 +115,30 @@
       <button class="grande" type="submit" id="btn-cliente">Guardar cliente</button>
       <p id="msg-nuevo-cliente" class="mensaje" role="status"></p>
     </form>
+  </section>
+
+  <!-- PANTALLA 3b2: editar cliente -->
+  <section id="vista-editar-cliente" hidden>
+    <div class="encabezado">
+      <h1>Editar cliente</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-editar-cliente">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+    <p id="msg-editar-cliente" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <label for="sel-editar-cliente">¿A quién quieres editar?</label>
+      <select id="sel-editar-cliente"></select>
+
+      <form id="form-editar-cliente" hidden>
+        <label for="editar-nombre">Nombre</label>
+        <input id="editar-nombre" type="text" autocomplete="off" required>
+        <button class="grande" type="submit" id="btn-editar-cliente">Guardar cambios</button>
+        <button class="grande peligro" type="button" id="eliminar-cliente" style="margin-top: 0.75rem;">Eliminar cliente</button>
+      </form>
+    </div>
   </section>
 
   <!-- PANTALLA 3c: estado de cuenta de un cliente -->
@@ -167,15 +193,33 @@
   <section id="vista-productos" hidden>
     <div class="encabezado">
       <h1>Productos</h1>
-      <div class="acciones-encabezado">
-        <button class="secundario" type="button" id="ir-comprar">Por comprar</button>
-        <button class="secundario js-salir" type="button">Salir</button>
-      </div>
+      <button class="secundario js-salir" type="button">Salir</button>
+    </div>
+    <div class="barra-acciones">
+      <button class="secundario" type="button" id="ir-nuevo-producto">Nuevo producto</button>
+      <button class="secundario" type="button" id="ir-comprar">Por comprar</button>
     </div>
     <p id="msg-editar" class="mensaje" role="status"></p>
 
+    <div class="panel">
+      <label for="buscar">Buscar producto</label>
+      <input id="buscar" type="search" autocomplete="off">
+      <ul id="lista" class="lista"></ul>
+      <p id="msg-lista" class="mensaje" role="status"></p>
+    </div>
+  </section>
+
+  <!-- PANTALLA 4a: nuevo producto -->
+  <section id="vista-nuevo-producto" hidden>
+    <div class="encabezado">
+      <h1>Nuevo producto</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-nuevo-producto">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+
     <form id="form-agregar" class="panel">
-      <h2>Agregar producto</h2>
       <label for="foto">Foto (opcional)</label>
       <input id="foto" type="file" accept="image/*">
       <label for="nombre">Nombre</label>
@@ -195,13 +239,6 @@
       <button class="grande" type="submit" id="btn-guardar">Guardar producto</button>
       <p id="msg-agregar" class="mensaje" role="status"></p>
     </form>
-
-    <div class="panel">
-      <label for="buscar">Buscar producto</label>
-      <input id="buscar" type="search" autocomplete="off">
-      <ul id="lista" class="lista"></ul>
-      <p id="msg-lista" class="mensaje" role="status"></p>
-    </div>
   </section>
 
   <!-- PANTALLA 4b: por comprar -->
@@ -216,9 +253,14 @@
     <p id="msg-comprar" class="mensaje" role="status"></p>
 
     <div class="panel">
-      <button class="grande secundario" type="button" id="copiar-lista" style="margin-bottom: 1rem;">Copiar lista</button>
+      <div class="barra-acciones">
+        <button class="secundario" type="button" id="llenar-faltantes">Llenar con lo que falta</button>
+        <button class="secundario" type="button" id="copiar-lista">Copiar lista</button>
+      </div>
       <ul id="lista-comprar" class="lista"></ul>
     </div>
+
+    <button class="grande" type="button" id="guardar-compras">Guardar compras</button>
   </section>
 
   <!-- PANTALLA 5: historial -->
@@ -275,13 +317,13 @@
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=4"></script>
-<script src="productos.js?v=1"></script>
+<script src="app.js?v=5"></script>
+<script src="productos.js?v=2"></script>
 <script src="ventas.js?v=4"></script>
-<script src="clientes.js?v=4"></script>
+<script src="clientes.js?v=5"></script>
 <script src="cuenta.js?v=1"></script>
-<script src="comprar.js?v=1"></script>
-<script src="historial.js?v=1"></script>
+<script src="comprar.js?v=2"></script>
+<script src="historial.js?v=2"></script>
 <script src="inicio.js?v=1"></script>
 </body>
 </html>
