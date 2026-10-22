@@ -46,6 +46,10 @@ let abonandoId = null;      // cliente al que se le captura un abono
 let editandoId = null;      // producto que se está editando
 let compras = {};           // cantidades escritas en "Por comprar": { idProducto: texto }
 let vistaActual = "vender"; // pantalla que se está viendo
+let esDueno = false;        // ¿quien entró es el dueño? (si no, solo vende y ve clientes)
+
+// Pantallas que puede usar quien no es dueño
+const VISTAS_VENDEDOR = ["vender", "carrito", "clientes"];
 
 // Pesos enteros, sin centavos
 const dinero = new Intl.NumberFormat("es-MX", {
@@ -74,18 +78,39 @@ function crearCampo(textoEtiqueta, id, tipo, valor) {
   return { etiqueta, input };
 }
 
-// ---------- 3. Mostrar una pantalla u otra ----------
-function mostrar(sesionActiva) {
+// ---------- 3. Quién entró: dueño o vendedor ----------
+// Los dueños son los correos guardados en la tabla "duenos" de Supabase.
+// Cualquier otro usuario solo puede vender y ver a los clientes con sus deudas.
+async function cargarRol() {
+  const { data: datosSesion } = await db.auth.getSession();
+  const usuario = datosSesion.session ? datosSesion.session.user : null;
+  const correo = usuario && usuario.email ? usuario.email.toLowerCase() : "";
+
+  let dueno = false;
+  if (correo) {
+    const { data, error } = await db.from("duenos").select("email").eq("email", correo).maybeSingle();
+    dueno = !error && Boolean(data);
+  }
+  esDueno = dueno;
+  document.body.classList.toggle("rol-vendedor", !esDueno);
+}
+
+// ---------- 4. Mostrar una pantalla u otra ----------
+async function mostrar(sesionActiva) {
   vistaLogin.hidden = sesionActiva;
   $("pie").hidden = !sesionActiva;
 
   if (sesionActiva) {
+    await cargarRol();
     irA(vistaActual);
     cargarProductos();
     cargarClientes();
-    cargarPago();
+    if (esDueno) cargarPago();
   } else {
     for (const nombre in vistas) vistas[nombre].hidden = true;
+    esDueno = false;
+    document.body.classList.add("rol-vendedor");
+    vistaActual = "vender";
     carrito = {};
     compras = {};
     abonandoId = null;
@@ -94,6 +119,7 @@ function mostrar(sesionActiva) {
 }
 
 function irA(nombre) {
+  if (!esDueno && !VISTAS_VENDEDOR.includes(nombre)) nombre = "vender";
   vistaActual = nombre;
   const pestana = PESTANA[nombre];
   for (const clave in vistas) {
