@@ -9,55 +9,57 @@
   overflow: hidden;
   border-radius: 8px;
 }
-.foto { width: 100%; aspect-ratio: 1 / 1; font-size: 2.5rem; }
+.foto { width: 100%; aspect-ratio: 1 / 1; font-size: 1.8rem; }
 .foto-chica { width: 3.5rem; height: 3.5rem; flex: none; font-size: 1.5rem; }
 .foto img, .foto-chica img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .con-foto { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 
-/* Cuadrícula para elegir productos */
+/* Cuadrícula para elegir productos: 3 por fila */
+.panel.compacto { padding: 0.6rem; }
 .cuadricula {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
 }
 .tarjeta {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.35rem;
+  gap: 0.25rem;
   min-height: 0;
-  padding: 0.5rem;
+  min-width: 0;
+  padding: 0.35rem;
   text-align: left;
   background: #fff;
   color: var(--texto);
   border: 2px solid var(--borde);
-  border-radius: 12px;
+  border-radius: 10px;
 }
 .tarjeta:hover { background: #F5F9F9; }
 .tarjeta.elegida { border-color: var(--acento); background: #EAF4F6; }
 .t-nombre {
-  font-size: 0.95rem;
-  line-height: 1.2;
-  min-height: 2.4em;
+  font-size: 0.8rem;
+  line-height: 1.15;
+  min-height: 2.3em;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-.t-precio { color: var(--acento); font-size: 1.1rem; }
+.t-precio { color: var(--acento); font-size: 0.95rem; }
 .insignia {
   position: absolute;
   top: 0.25rem;
   right: 0.25rem;
-  min-width: 2.1rem;
-  height: 2.1rem;
-  padding: 0 0.45rem;
-  border-radius: 1.1rem;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 0 0.35rem;
+  border-radius: 1rem;
   background: var(--acento);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,5 +88,9 @@
 .inv-bajo { color: var(--error); font-weight: 700; }
 
 /* Botones de cada cliente */
-.acciones-fila { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
-.acciones-fila button { min-height: 2.75rem; padding: 0.35rem 0.9rem; }
+.fila-item .saldo { margin-bottom: 0; }
+.acciones-fila { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.acciones-fila button { flex: 1; min-height: 2.75rem; padding: 0.35rem 0.5rem; }
+
+/* Saldo grande en el estado de cuenta */
+.total-grande.sin-linea { border-top: 0; margin-top: 0; padding-top: 0; margin-bottom: 0.75rem; }
