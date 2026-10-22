@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
-<link rel="stylesheet" href="vender.css?v=1">
+<link rel="stylesheet" href="vender.css?v=2">
 </head>
 <body>
 <main>
@@ -40,9 +40,7 @@
     </div>
     <p id="msg-venta" class="mensaje" role="status"></p>
 
-    <div class="panel">
-      <label for="buscar-venta">Buscar producto</label>
-      <input id="buscar-venta" type="search" autocomplete="off">
+    <div class="panel compacto">
       <div id="cuadricula" class="cuadricula"></div>
     </div>
   </section>
@@ -83,25 +81,86 @@
   <section id="vista-clientes" hidden>
     <div class="encabezado">
       <h1>Clientes</h1>
-      <button class="secundario js-salir" type="button">Salir</button>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="ir-nuevo-cliente">Nuevo cliente</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
     </div>
     <p id="msg-clientes" class="mensaje" role="status"></p>
 
-    <form id="form-cliente" class="panel">
-      <h2>Agregar cliente</h2>
-      <label for="cliente-nombre">Nombre</label>
-      <input id="cliente-nombre" type="text" autocomplete="off" required>
-      <label for="cliente-telefono">Teléfono (opcional)</label>
-      <input id="cliente-telefono" type="tel" inputmode="tel" autocomplete="off">
-      <button class="grande" type="submit" id="btn-cliente">Guardar cliente</button>
-    </form>
-
     <div class="panel">
       <p class="total-cobrar" id="total-por-cobrar"></p>
+      <button class="grande secundario" type="button" id="ir-pago" style="margin-bottom: 1rem;">Datos de pago para cobrar</button>
       <label for="buscar-cliente">Buscar cliente</label>
       <input id="buscar-cliente" type="search" autocomplete="off">
       <ul id="lista-clientes" class="lista"></ul>
     </div>
+  </section>
+
+  <!-- PANTALLA 3b: nuevo cliente -->
+  <section id="vista-nuevo-cliente" hidden>
+    <div class="encabezado">
+      <h1>Nuevo cliente</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-nuevo-cliente">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+
+    <form id="form-cliente" class="panel">
+      <label for="cliente-nombre">Nombre</label>
+      <input id="cliente-nombre" type="text" autocomplete="off" required>
+      <button class="grande" type="submit" id="btn-cliente">Guardar cliente</button>
+      <p id="msg-nuevo-cliente" class="mensaje" role="status"></p>
+    </form>
+  </section>
+
+  <!-- PANTALLA 3c: estado de cuenta de un cliente -->
+  <section id="vista-cuenta" hidden>
+    <div class="encabezado">
+      <h1>Cuenta</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-cuenta">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+    <p id="msg-cuenta" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <h2 id="cuenta-nombre"></h2>
+      <div class="total-grande sin-linea"><span>Debe</span><strong id="cuenta-saldo"></strong></div>
+      <ul id="lista-cuenta" class="lista"></ul>
+      <p class="detalle" style="margin: 0.75rem 0 0;">Las cuentas ya liquidadas se conservan en el Historial.</p>
+    </div>
+
+    <p id="aviso-pago" class="vacio" hidden>Aún no guardas tus datos de pago, así que el mensaje saldrá sin ellos.</p>
+    <button class="grande" type="button" id="copiar-cuenta">Copiar para WhatsApp</button>
+    <button class="grande secundario" type="button" id="ir-pago-cuenta" style="margin-top: 0.75rem;">Datos de pago</button>
+  </section>
+
+  <!-- PANTALLA 3d: datos de pago -->
+  <section id="vista-pago" hidden>
+    <div class="encabezado">
+      <h1>Datos de pago</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-pago">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+
+    <form id="form-pago" class="panel">
+      <p class="detalle" style="margin-top: 0;">Estos datos aparecen al final del mensaje de WhatsApp.</p>
+      <label for="pago-banco">Banco</label>
+      <input id="pago-banco" type="text" autocomplete="off">
+      <label for="pago-titular">A nombre de</label>
+      <input id="pago-titular" type="text" autocomplete="off">
+      <label for="pago-cuenta">Número de cuenta, CLABE o tarjeta</label>
+      <input id="pago-cuenta" type="text" inputmode="numeric" autocomplete="off">
+      <label for="pago-nota">Nota adicional (opcional)</label>
+      <input id="pago-nota" type="text" autocomplete="off">
+      <button class="grande" type="submit" id="btn-guardar-pago">Guardar datos</button>
+      <p id="msg-pago" class="mensaje" role="status"></p>
+    </form>
   </section>
 
   <!-- PANTALLA 4: productos -->
@@ -216,10 +275,11 @@
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=4"></script>
 <script src="productos.js?v=1"></script>
-<script src="ventas.js?v=3"></script>
-<script src="clientes.js?v=3"></script>
+<script src="ventas.js?v=4"></script>
+<script src="clientes.js?v=4"></script>
+<script src="cuenta.js?v=1"></script>
 <script src="comprar.js?v=1"></script>
 <script src="historial.js?v=1"></script>
 <script src="inicio.js?v=1"></script>
