@@ -13,13 +13,7 @@ async function cargarClientes() {
   clientes = data.map((c) => ({ ...c, saldo: redondear(c.saldo) }));
   pintarClientes();
   llenarSelectClientes();
-}
-
-function abrirCliente(id, modo) {
-  const igual = clienteAbierto && clienteAbierto.id === id && clienteAbierto.modo === modo;
-  clienteAbierto = igual ? null : { id, modo };
-  aviso("msg-clientes", "");
-  pintarClientes();
+  llenarSelectEditar();
 }
 
 function pintarClientes() {
@@ -59,8 +53,6 @@ function pintarClientes() {
     fila.append(nombre, saldo);
     li.appendChild(fila);
 
-    const abierto = clienteAbierto && clienteAbierto.id === c.id ? clienteAbierto.modo : null;
-
     const acciones = document.createElement("div");
     acciones.className = "acciones-fila";
 
@@ -74,26 +66,24 @@ function pintarClientes() {
       const abonar = document.createElement("button");
       abonar.type = "button";
       abonar.className = "secundario";
-      abonar.textContent = abierto === "abono" ? "Cerrar" : "Abonar";
-      abonar.addEventListener("click", () => abrirCliente(c.id, "abono"));
+      abonar.textContent = abonandoId === c.id ? "Cerrar" : "Abonar";
+      abonar.addEventListener("click", () => {
+        abonandoId = abonandoId === c.id ? null : c.id;
+        aviso("msg-clientes", "");
+        pintarClientes();
+      });
       acciones.appendChild(abonar);
     }
 
-    const editar = document.createElement("button");
-    editar.type = "button";
-    editar.className = "secundario";
-    editar.textContent = abierto === "editar" ? "Cerrar" : "Editar";
-    editar.addEventListener("click", () => abrirCliente(c.id, "editar"));
-    acciones.appendChild(editar);
-
     li.appendChild(acciones);
 
-    if (abierto === "abono" && c.saldo > 0) li.appendChild(crearFormularioAbono(c));
-    if (abierto === "editar") li.appendChild(crearFormularioCliente(c));
+    if (abonandoId === c.id && c.saldo > 0) li.appendChild(crearFormularioAbono(c));
 
     lista.appendChild(li);
   }
 }
+
+$("buscar-cliente").addEventListener("input", pintarClientes);
 
 // ---------- Abonos ----------
 function crearFormularioAbono(c) {
@@ -118,7 +108,7 @@ function crearFormularioAbono(c) {
   cancelar.className = "secundario";
   cancelar.textContent = "Cancelar";
   cancelar.addEventListener("click", () => {
-    clienteAbierto = null;
+    abonandoId = null;
     pintarClientes();
   });
 
@@ -151,7 +141,7 @@ function crearFormularioAbono(c) {
     }
 
     const nuevoSaldo = c.saldo - monto;
-    clienteAbierto = null;
+    abonandoId = null;
     await cargarClientes();
     aviso(
       "msg-clientes",
@@ -166,97 +156,6 @@ function crearFormularioAbono(c) {
   setTimeout(() => campo.input.focus(), 0);
   return form;
 }
-
-// ---------- Editar o eliminar un cliente ----------
-function crearFormularioCliente(c) {
-  const form = document.createElement("form");
-  form.className = "subform";
-
-  const nombre = crearCampo("Nombre", "edit-cliente-nombre", "text", c.nombre);
-  nombre.input.required = true;
-  nombre.input.autocomplete = "off";
-
-  const botones = document.createElement("div");
-  botones.className = "fila";
-
-  const guardar = document.createElement("button");
-  guardar.type = "submit";
-  guardar.textContent = "Guardar cambios";
-
-  const cancelar = document.createElement("button");
-  cancelar.type = "button";
-  cancelar.className = "secundario";
-  cancelar.textContent = "Cancelar";
-  cancelar.addEventListener("click", () => {
-    clienteAbierto = null;
-    pintarClientes();
-  });
-  botones.append(guardar, cancelar);
-
-  const eliminar = document.createElement("button");
-  eliminar.type = "button";
-  eliminar.className = "peligro grande";
-  eliminar.textContent = "Eliminar cliente";
-
-  form.append(nombre.etiqueta, nombre.input, botones, eliminar);
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const nuevoNombre = nombre.input.value.trim();
-    if (!nuevoNombre) {
-      aviso("msg-clientes", "Escribe el nombre del cliente.", "error");
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    guardar.disabled = true;
-    const { error } = await db.from("clientes").update({ nombre: nuevoNombre }).eq("id", c.id);
-    guardar.disabled = false;
-
-    if (error) {
-      aviso("msg-clientes", "No se pudieron guardar los cambios. Intenta otra vez.", "error");
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    clienteAbierto = null;
-    await cargarClientes();
-    aviso("msg-clientes", "Cambios guardados ✓", "ok");
-    window.scrollTo(0, 0);
-  });
-
-  eliminar.addEventListener("click", async () => {
-    if (c.saldo > 0) {
-      aviso(
-        "msg-clientes",
-        c.nombre + " debe " + dinero.format(c.saldo) + ". Registra sus abonos antes de eliminarlo.",
-        "error"
-      );
-      window.scrollTo(0, 0);
-      return;
-    }
-    if (!window.confirm("¿Eliminar a " + c.nombre + "? Sus ventas anteriores se conservan en el historial.")) return;
-
-    eliminar.disabled = true;
-    const { error } = await db.from("clientes").delete().eq("id", c.id);
-    eliminar.disabled = false;
-
-    if (error) {
-      aviso("msg-clientes", "No se pudo eliminar al cliente. Intenta otra vez.", "error");
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    clienteAbierto = null;
-    await cargarClientes();
-    aviso("msg-clientes", c.nombre + " eliminado.", "ok");
-    window.scrollTo(0, 0);
-  });
-
-  return form;
-}
-
-$("buscar-cliente").addEventListener("input", pintarClientes);
 
 // ---------- Pantalla "Nuevo cliente" ----------
 $("ir-nuevo-cliente").addEventListener("click", () => {
@@ -287,4 +186,106 @@ $("form-cliente").addEventListener("submit", async (e) => {
   irA("clientes");
   await cargarClientes();
   aviso("msg-clientes", "Cliente guardado ✓", "ok");
+});
+
+// ---------- Pantalla "Editar cliente" ----------
+function clienteElegido() {
+  return clientes.find((c) => String(c.id) === $("sel-editar-cliente").value);
+}
+
+// Muestra el formulario solo cuando hay un cliente elegido en la lista
+function mostrarFormularioEditar(rellenar) {
+  const c = clienteElegido();
+  $("form-editar-cliente").hidden = !c;
+  if (c && rellenar) $("editar-nombre").value = c.nombre;
+}
+
+function llenarSelectEditar() {
+  const sel = $("sel-editar-cliente");
+  const actual = sel.value;
+  sel.replaceChildren();
+
+  const base = document.createElement("option");
+  base.value = "";
+  base.textContent = "Elige un cliente";
+  sel.appendChild(base);
+
+  for (const c of clientes) {
+    const opcion = document.createElement("option");
+    opcion.value = String(c.id);
+    opcion.textContent = c.nombre;
+    sel.appendChild(opcion);
+  }
+
+  sel.value = [...sel.options].some((o) => o.value === actual) ? actual : "";
+  mostrarFormularioEditar(false);
+}
+
+$("ir-editar-cliente").addEventListener("click", () => {
+  $("sel-editar-cliente").value = "";
+  mostrarFormularioEditar(false);
+  aviso("msg-editar-cliente", "");
+  irA("editarcliente");
+});
+
+$("volver-editar-cliente").addEventListener("click", () => irA("clientes"));
+
+$("sel-editar-cliente").addEventListener("change", () => {
+  aviso("msg-editar-cliente", "");
+  mostrarFormularioEditar(true);
+});
+
+$("form-editar-cliente").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const c = clienteElegido();
+  if (!c) return;
+
+  const nuevoNombre = $("editar-nombre").value.trim();
+  if (!nuevoNombre) {
+    aviso("msg-editar-cliente", "Escribe el nombre del cliente.", "error");
+    return;
+  }
+
+  const boton = $("btn-editar-cliente");
+  boton.disabled = true;
+  const { error } = await db.from("clientes").update({ nombre: nuevoNombre }).eq("id", c.id);
+  boton.disabled = false;
+
+  if (error) {
+    aviso("msg-editar-cliente", "No se pudieron guardar los cambios. Intenta otra vez.", "error");
+    return;
+  }
+
+  irA("clientes");
+  await cargarClientes();
+  aviso("msg-clientes", "Cambios guardados ✓", "ok");
+});
+
+$("eliminar-cliente").addEventListener("click", async () => {
+  const c = clienteElegido();
+  if (!c) return;
+
+  if (c.saldo > 0) {
+    aviso(
+      "msg-editar-cliente",
+      c.nombre + " debe " + dinero.format(c.saldo) + ". Registra sus abonos antes de eliminarlo.",
+      "error"
+    );
+    return;
+  }
+  if (!window.confirm("¿Eliminar a " + c.nombre + "? Sus ventas anteriores se conservan en el historial.")) return;
+
+  const boton = $("eliminar-cliente");
+  boton.disabled = true;
+  const { error } = await db.from("clientes").delete().eq("id", c.id);
+  boton.disabled = false;
+
+  if (error) {
+    aviso("msg-editar-cliente", "No se pudo eliminar al cliente. Intenta otra vez.", "error");
+    return;
+  }
+
+  irA("clientes");
+  await cargarClientes();
+  aviso("msg-clientes", c.nombre + " eliminado.", "ok");
 });
