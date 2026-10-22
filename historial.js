@@ -111,6 +111,13 @@ function pintarHistorial(ventas, abonos) {
       li.appendChild(linea);
     }
 
+    const eliminarVentaBtn = document.createElement("button");
+    eliminarVentaBtn.type = "button";
+    eliminarVentaBtn.className = "peligro btn-mov";
+    eliminarVentaBtn.textContent = "Eliminar venta";
+    eliminarVentaBtn.addEventListener("click", () => eliminarVenta(v));
+    li.appendChild(eliminarVentaBtn);
+
     listaVentas.appendChild(li);
   }
 
@@ -147,8 +154,56 @@ function pintarHistorial(ventas, abonos) {
 
     fila.append(izquierda, monto);
     li.appendChild(fila);
+
+    const eliminarAbonoBtn = document.createElement("button");
+    eliminarAbonoBtn.type = "button";
+    eliminarAbonoBtn.className = "peligro btn-mov";
+    eliminarAbonoBtn.textContent = "Eliminar abono";
+    eliminarAbonoBtn.addEventListener("click", () => eliminarAbono(a));
+    li.appendChild(eliminarAbonoBtn);
+
     listaAbonos.appendChild(li);
   }
+}
+
+// ---------- Eliminar una venta o un abono equivocado ----------
+async function eliminarVenta(v) {
+  const cuenta = v.a_credito && v.clientes
+    ? " También se quitará de la cuenta de " + v.clientes.nombre + "."
+    : "";
+  const pregunta = "¿Eliminar la venta de " + dinero.format(v.total) + " de las " + horaDe(v.created_at) +
+    "? Los productos regresan al inventario." + cuenta;
+  if (!window.confirm(pregunta)) return;
+
+  // Esta función de Supabase regresa los productos al inventario y borra la venta en un solo paso.
+  const { error } = await db.rpc("eliminar_venta", { p_venta_id: v.id });
+  if (error) {
+    aviso("msg-historial", "No se pudo eliminar la venta. Intenta otra vez.", "error");
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  await Promise.all([cargarHistorial(), cargarProductos(), cargarClientes()]);
+  aviso("msg-historial", "Venta eliminada ✓ El inventario y las cuentas ya se actualizaron.", "ok");
+  window.scrollTo(0, 0);
+}
+
+async function eliminarAbono(a) {
+  const quien = a.clientes ? " de " + a.clientes.nombre : "";
+  const pregunta = "¿Eliminar el abono de " + dinero.format(a.monto) + quien + " de las " + horaDe(a.created_at) +
+    "? Volverá a sumarse a lo que debe.";
+  if (!window.confirm(pregunta)) return;
+
+  const { error } = await db.from("abonos").delete().eq("id", a.id);
+  if (error) {
+    aviso("msg-historial", "No se pudo eliminar el abono. Intenta otra vez.", "error");
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  await Promise.all([cargarHistorial(), cargarClientes()]);
+  aviso("msg-historial", "Abono eliminado ✓ La cuenta del cliente ya se actualizó.", "ok");
+  window.scrollTo(0, 0);
 }
 
 // ---------- Botones y fecha ----------
