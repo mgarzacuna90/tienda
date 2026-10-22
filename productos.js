@@ -76,7 +76,7 @@ const estaBajo = (p) => p.cantidad < p.minimo || p.cantidad <= 0;
 async function cargarProductos() {
   const { data, error } = await db
     .from("productos")
-    .select("id, nombre, precio, cantidad, minimo, imagen_url")
+    .select("id, nombre, precio, cantidad, minimo, posicion, imagen_url")
     .order("nombre", { ascending: true });
 
   if (error) {
@@ -130,7 +130,10 @@ function pintarLista() {
     nombre.textContent = p.nombre;
     const detalle = document.createElement("div");
     detalle.className = "detalle" + (estaBajo(p) ? " inv-bajo" : "");
-    detalle.textContent = "Inventario: " + p.cantidad + (p.minimo > 0 ? " · Mínimo: " + p.minimo : "");
+    detalle.textContent =
+      "Inventario: " + p.cantidad +
+      (p.minimo > 0 ? " · Mínimo: " + p.minimo : "") +
+      (p.posicion ? " · Lugar " + p.posicion : "");
     textos.append(nombre, detalle);
     izquierda.append(crearMiniatura(p, "foto-chica"), textos);
 
@@ -213,6 +216,21 @@ function crearFormularioProducto(p) {
   minimo.input.min = "0";
   minimo.input.step = "1";
 
+  // Lugar en la pantalla de Vender: los 9 primeros cuadritos
+  const etiquetaLugar = document.createElement("label");
+  etiquetaLugar.htmlFor = "edit-lugar";
+  etiquetaLugar.textContent = "Lugar en Vender (los 9 primeros)";
+  const lugar = document.createElement("select");
+  lugar.id = "edit-lugar";
+  lugar.appendChild(new Option("Sin lugar fijo (orden alfabético)", ""));
+  for (let n = 1; n <= 9; n++) {
+    const ocupante = productos.find((x) => x.posicion === n && x.id !== p.id);
+    lugar.appendChild(
+      new Option("Lugar " + n + (ocupante ? " · hoy: " + ocupante.nombre : " · libre"), String(n))
+    );
+  }
+  lugar.value = p.posicion ? String(p.posicion) : "";
+
   const botones = document.createElement("div");
   botones.className = "fila";
 
@@ -243,6 +261,7 @@ function crearFormularioProducto(p) {
       inventario.etiqueta, inventario.input,
       llegaron.etiqueta, llegaron.input,
       minimo.etiqueta, minimo.input,
+      etiquetaLugar, lugar,
       botones, eliminar,
     ].filter(Boolean)
   );
@@ -295,13 +314,25 @@ function crearFormularioProducto(p) {
 
     if (p.imagen_url && nuevaFoto !== p.imagen_url) borrarFoto(p.imagen_url).catch(() => {});
 
+    // Si cambió el lugar en Vender, esta función de Supabase acomoda también al producto que lo tenía.
+    const nuevoLugar = lugar.value ? parseInt(lugar.value, 10) : null;
+    let falloLugar = false;
+    if (nuevoLugar !== (p.posicion || null)) {
+      const { error: errorLugar } = await db.rpc("asignar_lugar", { p_producto_id: p.id, p_lugar: nuevoLugar });
+      falloLugar = Boolean(errorLugar);
+    }
+
     editandoId = null;
     await cargarProductos();
-    aviso(
-      "msg-editar",
-      "Cambios guardados ✓ " + nuevoNombre + ": " + dinero.format(nuevoPrecio) + ", inventario " + nuevaCantidad + ".",
-      "ok"
-    );
+    if (falloLugar) {
+      aviso("msg-editar", "Se guardaron los cambios, pero no se pudo cambiar el lugar en Vender. Intenta otra vez.", "error");
+    } else {
+      aviso(
+        "msg-editar",
+        "Cambios guardados ✓ " + nuevoNombre + ": " + dinero.format(nuevoPrecio) + ", inventario " + nuevaCantidad + ".",
+        "ok"
+      );
+    }
     window.scrollTo(0, 0);
   });
 
