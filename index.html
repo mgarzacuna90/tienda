@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
-<link rel="stylesheet" href="extras.css?v=2">
+<link rel="stylesheet" href="extras.css?v=3">
 </head>
 <body class="rol-vendedor">
 <main>
@@ -35,7 +35,7 @@
     <div class="encabezado encabezado-chico">
       <h1>Vender</h1>
       <div class="acciones-encabezado">
-        <button class="secundario solo-dueno" type="button" id="ir-historial">Historial</button>
+        <button class="secundario" type="button" id="ir-historial">Historial</button>
         <button class="secundario js-salir" type="button">Salir</button>
       </div>
     </div>
@@ -85,15 +85,15 @@
       <h1>Clientes</h1>
       <button class="secundario js-salir" type="button">Salir</button>
     </div>
-    <div class="barra-acciones solo-dueno">
+    <div class="barra-acciones tres solo-dueno">
       <button class="secundario" type="button" id="ir-nuevo-cliente">Nuevo cliente</button>
       <button class="secundario" type="button" id="ir-editar-cliente">Editar cliente</button>
+      <button class="secundario" type="button" id="ir-pago">Datos de pago</button>
     </div>
     <p id="msg-clientes" class="mensaje" role="status"></p>
 
     <div class="panel">
       <p class="total-cobrar solo-dueno" id="total-por-cobrar"></p>
-      <button class="grande secundario solo-dueno" type="button" id="ir-pago" style="margin-bottom: 1rem;">Datos de pago para cobrar</button>
       <ul id="lista-clientes" class="lista"></ul>
     </div>
   </section>
@@ -201,8 +201,6 @@
     <p id="msg-editar" class="mensaje" role="status"></p>
 
     <div class="panel">
-      <label for="buscar">Buscar producto</label>
-      <input id="buscar" type="search" autocomplete="off">
       <ul id="lista" class="lista"></ul>
       <p id="msg-lista" class="mensaje" role="status"></p>
     </div>
@@ -276,11 +274,13 @@
     <div class="panel">
       <label for="fecha-historial">Día</label>
       <input id="fecha-historial" type="date">
-      <div class="resumen-fila"><span>Ventas (<span id="res-num">0</span>)</span><strong id="res-total"></strong></div>
-      <div class="resumen-fila"><span>De contado</span><strong id="res-contado"></strong></div>
-      <div class="resumen-fila"><span>A crédito</span><strong id="res-credito"></strong></div>
-      <div class="resumen-fila"><span>Abonos recibidos</span><strong id="res-abonos"></strong></div>
-      <div class="resumen-fila destacado"><span>Dinero recibido</span><strong id="res-recibido"></strong></div>
+      <div class="solo-dueno">
+        <div class="resumen-fila"><span>Ventas (<span id="res-num">0</span>)</span><strong id="res-total"></strong></div>
+        <div class="resumen-fila"><span>De contado</span><strong id="res-contado"></strong></div>
+        <div class="resumen-fila"><span>A crédito</span><strong id="res-credito"></strong></div>
+        <div class="resumen-fila"><span>Abonos recibidos</span><strong id="res-abonos"></strong></div>
+        <div class="resumen-fila destacado"><span>Dinero recibido</span><strong id="res-recibido"></strong></div>
+      </div>
     </div>
 
     <div class="panel">
@@ -288,9 +288,14 @@
       <ul id="lista-ventas-dia" class="lista"></ul>
     </div>
 
-    <div class="panel">
+    <div class="panel solo-dueno">
       <h2>Abonos</h2>
       <ul id="lista-abonos-dia" class="lista"></ul>
+    </div>
+
+    <div class="panel solo-dueno">
+      <h2>Resúmenes</h2>
+      <div id="resumenes"></div>
     </div>
   </section>
 
@@ -316,13 +321,13 @@
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=6"></script>
-<script src="productos.js?v=3"></script>
+<script src="app.js?v=7"></script>
+<script src="productos.js?v=4"></script>
 <script src="ventas.js?v=5"></script>
-<script src="clientes.js?v=6"></script>
+<script src="clientes.js?v=7"></script>
 <script src="cuenta.js?v=1"></script>
 <script src="comprar.js?v=2"></script>
-<script src="historial.js?v=3"></script>
+<script src="historial.js?v=4"></script>
 <script src="inicio.js?v=1"></script>
 </body>
 </html>
