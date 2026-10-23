@@ -11,7 +11,7 @@
 /* Los 9 productos principales de Vender: caben en una sola pantalla */
 .destacados {
   height: calc(100vh - 16rem);
-  height: calc(100dvh - 16rem);
+  height: calc(100svh - 16rem); /* svh no cambia al subir o bajar la barra del navegador */
   min-height: 21rem;
   max-height: 44rem;
   display: grid;
