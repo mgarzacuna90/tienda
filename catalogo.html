@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B5C6B">
+<title>Catálogo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo: #F2F5F4;
+    --texto: #12222B;
+    --apagado: #46565F;
+    --acento: #0B5C6B;
+    --borde: #B9C6CC;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.35;
+  }
+
+  header {
+    background: var(--acento);
+    color: #fff;
+    padding: 1.25rem 1rem;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 1.6rem; }
+  header p { margin: 0.25rem 0 0; opacity: 0.9; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 1rem; }
+
+  .estado { text-align: center; color: var(--apagado); padding: 2rem 0; }
+
+  .catalogo {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  @media (min-width: 560px) {
+    .catalogo { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 760px) {
+    .catalogo { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .producto {
+    background: #fff;
+    border: 2px solid var(--borde);
+    border-radius: 12px;
+    padding: 0.5rem;
+    min-width: 0;
+  }
+
+  .foto {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    background: #E6EFF1;
+    color: var(--acento);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    overflow: hidden;
+  }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .nombre {
+    margin-top: 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+  .precio {
+    margin-top: 0.15rem;
+    color: var(--acento);
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+
+  footer { text-align: center; color: var(--apagado); font-size: 0.85rem; padding: 1rem 1rem 2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="titulo">Catálogo</h1>
+  <p>Productos y precios</p>
+</header>
+
+<main>
+  <p id="estado" class="estado">Cargando productos…</p>
+  <div id="catalogo" class="catalogo"></div>
+</main>
+
+<footer>Los precios pueden cambiar sin previo aviso.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  // Cambia aquí el nombre de tu tienda (aparece arriba en el catálogo)
+  const NOMBRE_TIENDA = "Mi tienda";
+
+  // Estos dos datos son públicos. El catálogo solo puede leer nombre, precio y foto.
+  const SUPABASE_URL = "https://vyrpnkbvurbueugpuwak.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_zMYMbcXO528BkfF1DEKwKw_S5DmUrRf";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const dinero = new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
+  document.getElementById("titulo").textContent = NOMBRE_TIENDA;
+  document.title = "Catálogo · " + NOMBRE_TIENDA;
+
+  function crearTarjeta(p) {
+    const tarjeta = document.createElement("div");
+    tarjeta.className = "producto";
+
+    const foto = document.createElement("div");
+    foto.className = "foto";
+    if (p.imagen_url) {
+      const img = document.createElement("img");
+      img.src = p.imagen_url;
+      img.alt = p.nombre;
+      img.loading = "lazy";
+      foto.appendChild(img);
+    } else {
+      foto.textContent = (p.nombre.trim()[0] || "?").toUpperCase();
+    }
+
+    const nombre = document.createElement("div");
+    nombre.className = "nombre";
+    nombre.textContent = p.nombre;
+
+    const precio = document.createElement("div");
+    precio.className = "precio";
+    precio.textContent = dinero.format(p.precio);
+
+    tarjeta.append(foto, nombre, precio);
+    return tarjeta;
+  }
+
+  async function cargarCatalogo() {
+    const estado = document.getElementById("estado");
+    const contenedor = document.getElementById("catalogo");
+
+    // Esta función de Supabase entrega solo nombre, precio y foto de los productos
+    const { data, error } = await db.rpc("catalogo");
+
+    if (error) {
+      estado.textContent = "No se pudo cargar el catálogo. Intenta de nuevo más tarde.";
+      return;
+    }
+    if (!data || data.length === 0) {
+      estado.textContent = "Pronto habrá productos aquí.";
+      return;
+    }
+
+    estado.hidden = true;
+    for (const p of data) contenedor.appendChild(crearTarjeta(p));
+  }
+
+  cargarCatalogo();
+</script>
+</body>
+</html>
