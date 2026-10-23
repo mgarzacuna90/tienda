@@ -40,5 +40,16 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// ---------- Enlace del catálogo público ----------
+$("copiar-catalogo").addEventListener("click", async () => {
+  const enlace = new URL("catalogo.html", window.location.href).href;
+  try {
+    await navigator.clipboard.writeText(enlace);
+    aviso("msg-editar", "Enlace copiado ✓ Pégalo en WhatsApp para compartir tu catálogo.", "ok");
+  } catch (err) {
+    aviso("msg-editar", "No se pudo copiar. Tu enlace es: " + enlace, "error");
+  }
+});
+
 // ---------- Al abrir la página ----------
 db.auth.getSession().then(({ data }) => mostrar(Boolean(data.session)));
