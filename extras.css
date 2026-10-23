@@ -63,3 +63,15 @@ body:not(.rol-vendedor) .admin .acciones-fila button { min-height: 2.2rem; }
 body:not(.rol-vendedor) .admin .mensaje { font-size: 0.85rem; margin-top: 0.4rem; }
 body:not(.rol-vendedor) .admin .total-cobrar { font-size: 1rem; margin-bottom: 0.6rem; }
 body:not(.rol-vendedor) .admin .total-grande { font-size: 1.2rem; }
+
+/* Resúmenes semanal, mensual y anual */
+.bloque-resumen { margin-bottom: 1.1rem; }
+.bloque-resumen:last-child { margin-bottom: 0; }
+.bloque-resumen h3 { margin: 0 0 0.4rem; font-size: 1rem; }
+
+/* Tres botones juntos arriba en Clientes: más pequeños */
+body:not(.rol-vendedor) .admin .barra-acciones.tres button {
+  padding: 0.3rem 0.2rem;
+  font-size: 0.78rem;
+  line-height: 1.15;
+}
