@@ -1,4 +1,4 @@
-// ===== historial.js: historial de ventas y abonos por día =====
+// ===== historial.js: historial de ventas y abonos por día, y resúmenes =====
 
 // Fecha de hoy como texto AAAA-MM-DD (en la hora de tu celular)
 function hoyTexto() {
@@ -25,48 +25,70 @@ async function cargarHistorial() {
   const { inicio, fin } = limitesDelDia(dia);
   aviso("msg-historial", "Cargando…");
 
-  const [ventasRes, abonosRes] = await Promise.all([
-    db
-      .from("ventas")
-      .select("id, created_at, total, a_credito, usuario_email, clientes(nombre), venta_items(nombre, precio, cantidad)")
-      .gte("created_at", inicio)
-      .lt("created_at", fin)
-      .order("created_at", { ascending: false }),
-    db
-      .from("abonos")
-      .select("id, created_at, monto, clientes(nombre)")
-      .gte("created_at", inicio)
-      .lt("created_at", fin)
-      .order("created_at", { ascending: false }),
-  ]);
+  // Ventas del día. Quien no es dueño solo ve las suyas.
+  let consultaVentas = db
+    .from("ventas")
+    .select("id, created_at, total, a_credito, usuario_email, clientes(nombre), venta_items(nombre, precio, cantidad)")
+    .gte("created_at", inicio)
+    .lt("created_at", fin);
+  if (!esDueno) consultaVentas = consultaVentas.eq("usuario_email", correoActual);
+  consultaVentas = consultaVentas.order("created_at", { ascending: false });
 
-  if (ventasRes.error || abonosRes.error) {
+  // Abonos del día (solo el dueño los ve)
+  const consultaAbonos = esDueno
+    ? db
+        .from("abonos")
+        .select("id, created_at, monto, clientes(nombre)")
+        .gte("created_at", inicio)
+        .lt("created_at", fin)
+        .order("created_at", { ascending: false })
+    : Promise.resolve({ data: [], error: null });
+
+  // La última venta de quien no es dueño: es la única que puede eliminar
+  const consultaUltima = esDueno
+    ? Promise.resolve({ data: [], error: null })
+    : db
+        .from("ventas")
+        .select("id")
+        .eq("usuario_email", correoActual)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1);
+
+  const [ventasRes, abonosRes, ultimaRes] = await Promise.all([consultaVentas, consultaAbonos, consultaUltima]);
+
+  if (ventasRes.error || abonosRes.error || ultimaRes.error) {
     aviso("msg-historial", "No se pudo cargar el historial. Revisa tu internet e intenta otra vez.", "error");
     return;
   }
 
+  const ultimaId = ultimaRes.data && ultimaRes.data[0] ? ultimaRes.data[0].id : null;
+
   aviso("msg-historial", "");
-  pintarHistorial(ventasRes.data, abonosRes.data);
+  pintarHistorial(ventasRes.data, abonosRes.data, ultimaId);
+  if (esDueno) cargarResumenes(dia);
 }
 
-function pintarHistorial(ventas, abonos) {
-  // ----- Resumen del día -----
-  let total = 0;
-  let contado = 0;
-  let credito = 0;
-  for (const v of ventas) {
-    total += Number(v.total);
-    if (v.a_credito) credito += Number(v.total);
-    else contado += Number(v.total);
-  }
-  const abonosTotal = abonos.reduce((suma, a) => suma + Number(a.monto), 0);
+function pintarHistorial(ventas, abonos, ultimaId) {
+  // ----- Resumen del día (solo el dueño) -----
+  if (esDueno) {
+    let total = 0;
+    let contado = 0;
+    let credito = 0;
+    for (const v of ventas) {
+      total += Number(v.total);
+      if (v.a_credito) credito += Number(v.total);
+      else contado += Number(v.total);
+    }
+    const abonosTotal = abonos.reduce((suma, a) => suma + Number(a.monto), 0);
 
-  $("res-num").textContent = ventas.length;
-  $("res-total").textContent = dinero.format(redondear(total));
-  $("res-contado").textContent = dinero.format(redondear(contado));
-  $("res-credito").textContent = dinero.format(redondear(credito));
-  $("res-abonos").textContent = dinero.format(redondear(abonosTotal));
-  $("res-recibido").textContent = dinero.format(redondear(contado + abonosTotal));
+    $("res-num").textContent = ventas.length;
+    $("res-total").textContent = dinero.format(redondear(total));
+    $("res-contado").textContent = dinero.format(redondear(contado));
+    $("res-credito").textContent = dinero.format(redondear(credito));
+    $("res-abonos").textContent = dinero.format(redondear(abonosTotal));
+    $("res-recibido").textContent = dinero.format(redondear(contado + abonosTotal));
+  }
 
   // ----- Lista de ventas -----
   const listaVentas = $("lista-ventas-dia");
@@ -117,17 +139,22 @@ function pintarHistorial(ventas, abonos) {
       li.appendChild(linea);
     }
 
-    const eliminarVentaBtn = document.createElement("button");
-    eliminarVentaBtn.type = "button";
-    eliminarVentaBtn.className = "peligro btn-mov";
-    eliminarVentaBtn.textContent = "Eliminar venta";
-    eliminarVentaBtn.addEventListener("click", () => eliminarVenta(v));
-    li.appendChild(eliminarVentaBtn);
+    // El dueño puede eliminar cualquier venta; los demás, solo su última venta
+    if (esDueno || v.id === ultimaId) {
+      const eliminarVentaBtn = document.createElement("button");
+      eliminarVentaBtn.type = "button";
+      eliminarVentaBtn.className = "peligro btn-mov";
+      eliminarVentaBtn.textContent = esDueno ? "Eliminar venta" : "Eliminar mi última venta";
+      eliminarVentaBtn.addEventListener("click", () => eliminarVenta(v));
+      li.appendChild(eliminarVentaBtn);
+    }
 
     listaVentas.appendChild(li);
   }
 
-  // ----- Lista de abonos -----
+  // ----- Lista de abonos (solo el dueño) -----
+  if (!esDueno) return;
+
   const listaAbonos = $("lista-abonos-dia");
   listaAbonos.replaceChildren();
 
@@ -170,6 +197,92 @@ function pintarHistorial(ventas, abonos) {
 
     listaAbonos.appendChild(li);
   }
+}
+
+// ---------- Resúmenes semanal, mensual y anual (solo el dueño) ----------
+const corto = (fecha) => fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+
+// Semana (lunes a domingo), mes y año del día elegido
+function periodosDe(diaTexto) {
+  const [anio, mes, dia] = diaTexto.split("-").map(Number);
+  const f = new Date(anio, mes - 1, dia);
+  const desdeLunes = (f.getDay() + 6) % 7;
+
+  const mesTexto = f.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+
+  return [
+    {
+      titulo: "Semana del " + corto(new Date(anio, mes - 1, dia - desdeLunes)) +
+        " al " + corto(new Date(anio, mes - 1, dia - desdeLunes + 6)),
+      inicio: new Date(anio, mes - 1, dia - desdeLunes),
+      fin: new Date(anio, mes - 1, dia - desdeLunes + 7),
+    },
+    {
+      titulo: "Mes: " + mesTexto.charAt(0).toUpperCase() + mesTexto.slice(1),
+      inicio: new Date(anio, mes - 1, 1),
+      fin: new Date(anio, mes, 1),
+    },
+    {
+      titulo: "Año " + anio,
+      inicio: new Date(anio, 0, 1),
+      fin: new Date(anio + 1, 0, 1),
+    },
+  ];
+}
+
+function filaResumen(etiqueta, valor, destacada) {
+  const fila = document.createElement("div");
+  fila.className = "resumen-fila" + (destacada ? " destacado" : "");
+  const izquierda = document.createElement("span");
+  izquierda.textContent = etiqueta;
+  const derecha = document.createElement("strong");
+  derecha.textContent = valor;
+  fila.append(izquierda, derecha);
+  return fila;
+}
+
+async function cargarResumenes(diaTexto) {
+  const periodos = periodosDe(diaTexto);
+
+  // Esta función de Supabase suma las ventas y abonos de cada periodo
+  const resultados = await Promise.all(
+    periodos.map((p) =>
+      db.rpc("resumen_periodo", { p_inicio: p.inicio.toISOString(), p_fin: p.fin.toISOString() })
+    )
+  );
+
+  const contenedor = $("resumenes");
+  contenedor.replaceChildren();
+
+  periodos.forEach((p, i) => {
+    const bloque = document.createElement("div");
+    bloque.className = "bloque-resumen";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = p.titulo;
+    bloque.appendChild(titulo);
+
+    const res = resultados[i];
+    if (res.error || !res.data || !res.data[0]) {
+      const aviso = document.createElement("p");
+      aviso.className = "vacio";
+      aviso.textContent = "No se pudo cargar este resumen.";
+      bloque.appendChild(aviso);
+    } else {
+      const d = res.data[0];
+      const contado = Number(d.contado);
+      const abonos = Number(d.abonos);
+      bloque.append(
+        filaResumen("Ventas (" + Number(d.num_ventas) + ")", dinero.format(redondear(d.total))),
+        filaResumen("De contado", dinero.format(redondear(contado))),
+        filaResumen("A crédito", dinero.format(redondear(d.credito))),
+        filaResumen("Abonos recibidos", dinero.format(redondear(abonos))),
+        filaResumen("Dinero recibido", dinero.format(redondear(contado + abonos)), true)
+      );
+    }
+
+    contenedor.appendChild(bloque);
+  });
 }
 
 // ---------- Eliminar una venta o un abono equivocado ----------
