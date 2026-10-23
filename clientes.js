@@ -31,7 +31,12 @@ function pintarClientes() {
     return;
   }
 
-  for (const c of clientes) {
+  // Primero los que deben dinero; al final los que no deben (cada grupo en orden alfabético)
+  const ordenados = [...clientes].sort(
+    (a, b) => (b.saldo > 0) - (a.saldo > 0) || a.nombre.localeCompare(b.nombre)
+  );
+
+  for (const c of ordenados) {
     const li = document.createElement("li");
     li.className = "item";
 
