@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
-<link rel="stylesheet" href="extras.css?v=3">
+<link rel="stylesheet" href="extras.css?v=4">
 </head>
 <body class="rol-vendedor">
 <main>
@@ -274,13 +274,11 @@
     <div class="panel">
       <label for="fecha-historial">Día</label>
       <input id="fecha-historial" type="date">
-      <div class="solo-dueno">
-        <div class="resumen-fila"><span>Ventas (<span id="res-num">0</span>)</span><strong id="res-total"></strong></div>
-        <div class="resumen-fila"><span>De contado</span><strong id="res-contado"></strong></div>
-        <div class="resumen-fila"><span>A crédito</span><strong id="res-credito"></strong></div>
-        <div class="resumen-fila"><span>Abonos recibidos</span><strong id="res-abonos"></strong></div>
-        <div class="resumen-fila destacado"><span>Dinero recibido</span><strong id="res-recibido"></strong></div>
-      </div>
+      <div class="resumen-fila"><span>Ventas (<span id="res-num">0</span>)</span><strong id="res-total"></strong></div>
+      <div class="resumen-fila"><span>De contado</span><strong id="res-contado"></strong></div>
+      <div class="resumen-fila"><span>A crédito</span><strong id="res-credito"></strong></div>
+      <div class="resumen-fila"><span>Abonos recibidos</span><strong id="res-abonos"></strong></div>
+      <div class="resumen-fila destacado"><span>Dinero recibido</span><strong id="res-recibido"></strong></div>
     </div>
 
     <div class="panel">
@@ -288,14 +286,21 @@
       <ul id="lista-ventas-dia" class="lista"></ul>
     </div>
 
-    <div class="panel solo-dueno">
+    <div class="panel">
       <h2>Abonos</h2>
       <ul id="lista-abonos-dia" class="lista"></ul>
     </div>
 
-    <div class="panel solo-dueno">
+    <div class="panel">
       <h2>Resúmenes</h2>
       <div id="resumenes"></div>
+    </div>
+
+    <div class="panel solo-dueno">
+      <h2>Reiniciar historial</h2>
+      <p class="detalle" style="margin-top: 0;">Borra las ventas y abonos del historial. No se puede deshacer y pide doble confirmación.</p>
+      <button class="grande peligro" type="button" id="reiniciar-conservar">Borrar historial y conservar deudas</button>
+      <button class="grande peligro" type="button" id="reiniciar-todo" style="margin-top: 0.75rem;">Borrar todo, también las deudas</button>
     </div>
   </section>
 
@@ -327,7 +332,7 @@
 <script src="clientes.js?v=7"></script>
 <script src="cuenta.js?v=1"></script>
 <script src="comprar.js?v=2"></script>
-<script src="historial.js?v=4"></script>
+<script src="historial.js?v=5"></script>
 <script src="inicio.js?v=1"></script>
 </body>
 </html>
