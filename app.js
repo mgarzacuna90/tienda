@@ -47,9 +47,10 @@ let editandoId = null;      // producto que se está editando
 let compras = {};           // cantidades escritas en "Por comprar": { idProducto: texto }
 let vistaActual = "vender"; // pantalla que se está viendo
 let esDueno = false;        // ¿quien entró es el dueño? (si no, solo vende y ve clientes)
+let correoActual = "";      // correo de quien está usando la app
 
 // Pantallas que puede usar quien no es dueño
-const VISTAS_VENDEDOR = ["vender", "carrito", "clientes"];
+const VISTAS_VENDEDOR = ["vender", "carrito", "clientes", "historial"];
 
 // Pesos enteros, sin centavos
 const dinero = new Intl.NumberFormat("es-MX", {
@@ -85,6 +86,7 @@ async function cargarRol() {
   const { data: datosSesion } = await db.auth.getSession();
   const usuario = datosSesion.session ? datosSesion.session.user : null;
   const correo = usuario && usuario.email ? usuario.email.toLowerCase() : "";
+  correoActual = correo;
 
   let dueno = false;
   if (correo) {
