@@ -25,24 +25,20 @@ async function cargarHistorial() {
   const { inicio, fin } = limitesDelDia(dia);
   aviso("msg-historial", "Cargando…");
 
-  // Ventas del día. Quien no es dueño solo ve las suyas.
-  let consultaVentas = db
+  // Ventas y abonos del día (todos los usuarios ven el historial completo)
+  const consultaVentas = db
     .from("ventas")
     .select("id, created_at, total, a_credito, usuario_email, clientes(nombre), venta_items(nombre, precio, cantidad)")
     .gte("created_at", inicio)
-    .lt("created_at", fin);
-  if (!esDueno) consultaVentas = consultaVentas.eq("usuario_email", correoActual);
-  consultaVentas = consultaVentas.order("created_at", { ascending: false });
+    .lt("created_at", fin)
+    .order("created_at", { ascending: false });
 
-  // Abonos del día (solo el dueño los ve)
-  const consultaAbonos = esDueno
-    ? db
-        .from("abonos")
-        .select("id, created_at, monto, clientes(nombre)")
-        .gte("created_at", inicio)
-        .lt("created_at", fin)
-        .order("created_at", { ascending: false })
-    : Promise.resolve({ data: [], error: null });
+  const consultaAbonos = db
+    .from("abonos")
+    .select("id, created_at, monto, clientes(nombre)")
+    .gte("created_at", inicio)
+    .lt("created_at", fin)
+    .order("created_at", { ascending: false });
 
   // La última venta de quien no es dueño: es la única que puede eliminar
   const consultaUltima = esDueno
@@ -66,29 +62,27 @@ async function cargarHistorial() {
 
   aviso("msg-historial", "");
   pintarHistorial(ventasRes.data, abonosRes.data, ultimaId);
-  if (esDueno) cargarResumenes(dia);
+  cargarResumenes(dia);
 }
 
 function pintarHistorial(ventas, abonos, ultimaId) {
-  // ----- Resumen del día (solo el dueño) -----
-  if (esDueno) {
-    let total = 0;
-    let contado = 0;
-    let credito = 0;
-    for (const v of ventas) {
-      total += Number(v.total);
-      if (v.a_credito) credito += Number(v.total);
-      else contado += Number(v.total);
-    }
-    const abonosTotal = abonos.reduce((suma, a) => suma + Number(a.monto), 0);
-
-    $("res-num").textContent = ventas.length;
-    $("res-total").textContent = dinero.format(redondear(total));
-    $("res-contado").textContent = dinero.format(redondear(contado));
-    $("res-credito").textContent = dinero.format(redondear(credito));
-    $("res-abonos").textContent = dinero.format(redondear(abonosTotal));
-    $("res-recibido").textContent = dinero.format(redondear(contado + abonosTotal));
+  // ----- Resumen del día -----
+  let total = 0;
+  let contado = 0;
+  let credito = 0;
+  for (const v of ventas) {
+    total += Number(v.total);
+    if (v.a_credito) credito += Number(v.total);
+    else contado += Number(v.total);
   }
+  const abonosTotal = abonos.reduce((suma, a) => suma + Number(a.monto), 0);
+
+  $("res-num").textContent = ventas.length;
+  $("res-total").textContent = dinero.format(redondear(total));
+  $("res-contado").textContent = dinero.format(redondear(contado));
+  $("res-credito").textContent = dinero.format(redondear(credito));
+  $("res-abonos").textContent = dinero.format(redondear(abonosTotal));
+  $("res-recibido").textContent = dinero.format(redondear(contado + abonosTotal));
 
   // ----- Lista de ventas -----
   const listaVentas = $("lista-ventas-dia");
@@ -152,9 +146,7 @@ function pintarHistorial(ventas, abonos, ultimaId) {
     listaVentas.appendChild(li);
   }
 
-  // ----- Lista de abonos (solo el dueño) -----
-  if (!esDueno) return;
-
+  // ----- Lista de abonos -----
   const listaAbonos = $("lista-abonos-dia");
   listaAbonos.replaceChildren();
 
@@ -188,18 +180,21 @@ function pintarHistorial(ventas, abonos, ultimaId) {
     fila.append(izquierda, monto);
     li.appendChild(fila);
 
-    const eliminarAbonoBtn = document.createElement("button");
-    eliminarAbonoBtn.type = "button";
-    eliminarAbonoBtn.className = "peligro btn-mov";
-    eliminarAbonoBtn.textContent = "Eliminar abono";
-    eliminarAbonoBtn.addEventListener("click", () => eliminarAbono(a));
-    li.appendChild(eliminarAbonoBtn);
+    // Solo el dueño puede eliminar abonos
+    if (esDueno) {
+      const eliminarAbonoBtn = document.createElement("button");
+      eliminarAbonoBtn.type = "button";
+      eliminarAbonoBtn.className = "peligro btn-mov";
+      eliminarAbonoBtn.textContent = "Eliminar abono";
+      eliminarAbonoBtn.addEventListener("click", () => eliminarAbono(a));
+      li.appendChild(eliminarAbonoBtn);
+    }
 
     listaAbonos.appendChild(li);
   }
 }
 
-// ---------- Resúmenes semanal, mensual y anual (solo el dueño) ----------
+// ---------- Resúmenes semanal, mensual y anual ----------
 const corto = (fecha) => fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 
 // Semana (lunes a domingo), mes y año del día elegido
@@ -324,6 +319,39 @@ async function eliminarAbono(a) {
   aviso("msg-historial", "Abono eliminado ✓ La cuenta del cliente ya se actualizó.", "ok");
   window.scrollTo(0, 0);
 }
+
+// ---------- Reiniciar el historial (solo el dueño, con doble confirmación) ----------
+async function reiniciarHistorial(conservarDeudas) {
+  const que = conservarDeudas
+    ? "Se borrarán todas las ventas y abonos del historial, menos lo que los clientes todavía deben. El inventario no cambia."
+    : "Se borrarán todas las ventas y abonos del historial Y TAMBIÉN lo que los clientes deben. El inventario no cambia.";
+
+  // Primera confirmación
+  if (!window.confirm(que + "\n\nEsto no se puede deshacer. ¿Quieres continuar?")) return;
+
+  // Segunda confirmación: hay que escribir la palabra
+  const palabra = window.prompt("Segunda confirmación: escribe BORRAR (en mayúsculas) para continuar.");
+  if (palabra === null) return;
+  if (palabra.trim() !== "BORRAR") {
+    aviso("msg-historial", "No se borró nada: la palabra no coincidía.", "error");
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  const { error } = await db.rpc("reiniciar_historial", { p_conservar_deudas: conservarDeudas });
+  if (error) {
+    aviso("msg-historial", "No se pudo reiniciar el historial. Intenta otra vez.", "error");
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  await Promise.all([cargarHistorial(), cargarClientes()]);
+  aviso("msg-historial", "Historial reiniciado ✓", "ok");
+  window.scrollTo(0, 0);
+}
+
+$("reiniciar-conservar").addEventListener("click", () => reiniciarHistorial(true));
+$("reiniciar-todo").addEventListener("click", () => reiniciarHistorial(false));
 
 // ---------- Botones y fecha ----------
 $("fecha-historial").value = hoyTexto();
