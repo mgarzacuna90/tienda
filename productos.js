@@ -100,22 +100,18 @@ async function cargarProductos() {
 
 // ---------- Lista de la pantalla "Productos" ----------
 function pintarLista() {
-  const texto = $("buscar").value.trim().toLowerCase();
-  const visibles = productos.filter((p) => p.nombre.toLowerCase().includes(texto));
   const lista = $("lista");
   lista.replaceChildren();
 
-  if (visibles.length === 0) {
+  if (productos.length === 0) {
     const vacio = document.createElement("li");
     vacio.className = "vacio";
-    vacio.textContent = productos.length === 0
-      ? "Aún no hay productos. Toca Nuevo producto para agregar el primero."
-      : "No hay productos con ese nombre.";
+    vacio.textContent = "Aún no hay productos. Toca Nuevo producto para agregar el primero.";
     lista.appendChild(vacio);
     return;
   }
 
-  for (const p of visibles) {
+  for (const p of productos) {
     const li = document.createElement("li");
     li.className = "item";
 
@@ -163,8 +159,6 @@ function pintarLista() {
     lista.appendChild(li);
   }
 }
-
-$("buscar").addEventListener("input", pintarLista);
 
 // ---------- Editar o eliminar un producto ----------
 function crearFormularioProducto(p) {
