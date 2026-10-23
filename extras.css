@@ -8,21 +8,71 @@
 /* Botón para eliminar una venta o un abono en el historial */
 .btn-mov { margin-top: 0.6rem; min-height: 2.75rem; }
 
-/* Los 9 productos principales de Vender: caben en una sola pantalla */
-.destacados {
-  height: calc(100vh - 16rem);
-  height: calc(100svh - 16rem); /* svh no cambia al subir o bajar la barra del navegador */
-  min-height: 21rem;
-  max-height: 44rem;
+/* Productos de Vender: todos los cuadritos del mismo tamaño, 3 por fila */
+:root { --alto-tarjeta: 8rem; }
+@supports (height: 100svh) {
+  /* svh no cambia al subir o bajar la barra del navegador, así que los tamaños no se mueven */
+  :root { --alto-tarjeta: clamp(6.5rem, calc((100svh - 17rem) / 3), 12rem); }
+}
+
+.destacados,
+.cuadricula {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: var(--alto-tarjeta);
   gap: 0.5rem;
 }
-.destacados .tarjeta { height: 100%; }
-.destacados .foto { flex: 1; min-height: 0; aspect-ratio: auto; }
 .destacados + .cuadricula { margin-top: 0.5rem; }
-.hueco { border: 2px dashed var(--borde); border-radius: 10px; }
+
+.tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.2rem;
+  height: 100%;
+  min-width: 0;
+  padding: 0.3rem;
+  text-align: center;
+}
+.tarjeta .foto {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  aspect-ratio: auto;
+  background: #F0F5F6;
+  border-radius: 6px;
+  font-size: 1.6rem;
+}
+.tarjeta .foto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0.15rem;
+  object-fit: contain;
+}
+.t-nombre {
+  flex: none;
+  height: 2.3em;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  text-align: center;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.t-precio {
+  flex: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--acento);
+}
+.hueco { height: 100%; border: 2px dashed var(--borde); border-radius: 10px; }
 
 /* Encabezado más bajo en Vender, y sin espacio cuando no hay mensaje */
 .encabezado-chico { padding: 0.25rem 0 0.5rem; }
