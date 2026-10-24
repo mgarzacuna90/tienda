@@ -94,6 +94,7 @@
 
     <div class="panel">
       <p class="total-cobrar solo-dueno" id="total-por-cobrar"></p>
+      <button class="grande secundario solo-dueno" type="button" id="ir-deudas" style="margin-bottom: 0.9rem;">Cargar deudas de otra aplicación</button>
       <ul id="lista-clientes" class="lista"></ul>
     </div>
   </section>
@@ -138,6 +139,25 @@
         <button class="grande peligro" type="button" id="eliminar-cliente" style="margin-top: 0.75rem;">Eliminar cliente</button>
       </form>
     </div>
+  </section>
+
+  <!-- PANTALLA 3b3: deudas anteriores (de otra aplicación) -->
+  <section id="vista-deudas" class="admin" hidden>
+    <div class="encabezado">
+      <h1>Deudas anteriores</h1>
+      <div class="acciones-encabezado">
+        <button class="secundario" type="button" id="volver-deudas">Volver</button>
+        <button class="secundario js-salir" type="button">Salir</button>
+      </div>
+    </div>
+    <p id="msg-deudas" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <p class="detalle" style="margin-top: 0;">Escribe cuánto debía cada cliente en tu otra aplicación. Se guarda como "Saldo anterior": suma a lo que debe, pero no cuenta como una venta. Para quitarla, deja la casilla vacía o en 0.</p>
+      <ul id="lista-deudas" class="lista"></ul>
+    </div>
+
+    <button class="grande" type="button" id="guardar-deudas">Guardar deudas</button>
   </section>
 
   <!-- PANTALLA 3c: estado de cuenta de un cliente -->
@@ -331,9 +351,10 @@
 <script src="productos.js?v=4"></script>
 <script src="ventas.js?v=5"></script>
 <script src="clientes.js?v=7"></script>
-<script src="cuenta.js?v=1"></script>
+<script src="deudas.js?v=1"></script>
+<script src="cuenta.js?v=2"></script>
 <script src="comprar.js?v=2"></script>
-<script src="historial.js?v=5"></script>
+<script src="historial.js?v=6"></script>
 <script src="inicio.js?v=2"></script>
 </body>
 </html>
