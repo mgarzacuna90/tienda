@@ -28,7 +28,7 @@ async function cargarHistorial() {
   // Ventas y abonos del día (todos los usuarios ven el historial completo)
   const consultaVentas = db
     .from("ventas")
-    .select("id, created_at, total, a_credito, usuario_email, clientes(nombre), venta_items(nombre, precio, cantidad)")
+    .select("id, created_at, total, a_credito, es_saldo_anterior, usuario_email, clientes(nombre), venta_items(nombre, precio, cantidad)")
     .gte("created_at", inicio)
     .lt("created_at", fin)
     .order("created_at", { ascending: false });
@@ -70,14 +70,17 @@ function pintarHistorial(ventas, abonos, ultimaId) {
   let total = 0;
   let contado = 0;
   let credito = 0;
+  let numVentas = 0;
   for (const v of ventas) {
+    if (v.es_saldo_anterior) continue; // un saldo anterior no cuenta como venta
+    numVentas += 1;
     total += Number(v.total);
     if (v.a_credito) credito += Number(v.total);
     else contado += Number(v.total);
   }
   const abonosTotal = abonos.reduce((suma, a) => suma + Number(a.monto), 0);
 
-  $("res-num").textContent = ventas.length;
+  $("res-num").textContent = numVentas;
   $("res-total").textContent = dinero.format(redondear(total));
   $("res-contado").textContent = dinero.format(redondear(contado));
   $("res-credito").textContent = dinero.format(redondear(credito));
@@ -108,9 +111,13 @@ function pintarHistorial(ventas, abonos, ultimaId) {
     titulo.textContent = horaDe(v.created_at);
     const tipo = document.createElement("div");
     tipo.className = v.a_credito ? "detalle etiqueta-credito" : "detalle";
-    tipo.textContent = v.a_credito
-      ? "A crédito" + (v.clientes ? " · " + v.clientes.nombre : "")
-      : "Contado";
+    if (v.es_saldo_anterior) {
+      tipo.textContent = "Saldo anterior" + (v.clientes ? " · " + v.clientes.nombre : "") + " (no cuenta como venta)";
+    } else {
+      tipo.textContent = v.a_credito
+        ? "A crédito" + (v.clientes ? " · " + v.clientes.nombre : "")
+        : "Contado";
+    }
     izquierda.append(titulo, tipo);
     if (v.usuario_email) {
       const quien = document.createElement("div");
@@ -282,11 +289,17 @@ async function cargarResumenes(diaTexto) {
 
 // ---------- Eliminar una venta o un abono equivocado ----------
 async function eliminarVenta(v) {
-  const cuenta = v.a_credito && v.clientes
-    ? " También se quitará de la cuenta de " + v.clientes.nombre + "."
-    : "";
-  const pregunta = "¿Eliminar la venta de " + dinero.format(v.total) + " de las " + horaDe(v.created_at) +
-    "? Los productos regresan al inventario." + cuenta;
+  let pregunta;
+  if (v.es_saldo_anterior) {
+    pregunta = "¿Eliminar el saldo anterior de " + dinero.format(v.total) +
+      (v.clientes ? " de " + v.clientes.nombre : "") + "? Se quitará de lo que debe.";
+  } else {
+    const cuenta = v.a_credito && v.clientes
+      ? " También se quitará de la cuenta de " + v.clientes.nombre + "."
+      : "";
+    pregunta = "¿Eliminar la venta de " + dinero.format(v.total) + " de las " + horaDe(v.created_at) +
+      "? Los productos regresan al inventario." + cuenta;
+  }
   if (!window.confirm(pregunta)) return;
 
   // Esta función de Supabase regresa los productos al inventario y borra la venta en un solo paso.
