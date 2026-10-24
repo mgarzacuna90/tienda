@@ -77,7 +77,7 @@ async function abrirCuenta(c) {
   const [ventasRes, abonosRes] = await Promise.all([
     db
       .from("ventas")
-      .select("id, created_at, total, venta_items(nombre, precio, cantidad)")
+      .select("id, created_at, total, es_saldo_anterior, venta_items(nombre, precio, cantidad)")
       .eq("cliente_id", c.id)
       .eq("a_credito", true)
       .order("created_at", { ascending: true }),
@@ -98,6 +98,7 @@ async function abrirCuenta(c) {
   const movimientos = [
     ...ventasRes.data.map((v) => ({
       tipo: "compra",
+      anterior: v.es_saldo_anterior,
       fecha: v.created_at,
       monto: Number(v.total),
       items: v.venta_items,
@@ -155,7 +156,8 @@ function pintarCuenta() {
     const izquierda = document.createElement("div");
     const titulo = document.createElement("div");
     titulo.className = "nombre";
-    titulo.textContent = fechaCorta(m.fecha) + " · " + (m.tipo === "compra" ? "Compra" : "Abono");
+    const nombreMovimiento = m.tipo === "abono" ? "Abono" : (m.anterior ? "Saldo anterior" : "Compra");
+    titulo.textContent = fechaCorta(m.fecha) + " · " + nombreMovimiento;
     const detalle = document.createElement("div");
     detalle.className = "detalle";
     detalle.textContent = "Saldo: " + dinero.format(Math.max(redondear(m.saldo), 0));
@@ -195,7 +197,9 @@ function textoParaWhatsApp() {
   lineas.push("");
   lineas.push("Movimientos:");
   for (const m of pendientes) {
-    if (m.tipo === "compra") {
+    if (m.tipo === "compra" && m.anterior) {
+      lineas.push("• " + fechaCorta(m.fecha) + " Saldo anterior: " + dinero.format(m.monto));
+    } else if (m.tipo === "compra") {
       const productosTexto = m.items.map((it) => it.cantidad + " × " + it.nombre).join(", ");
       lineas.push("• " + fechaCorta(m.fecha) + " Compra: " + productosTexto + " = " + dinero.format(m.monto));
     } else {
