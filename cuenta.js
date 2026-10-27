@@ -182,7 +182,7 @@ function pintarCuenta() {
 
   const hayPago = datosPago.banco || datosPago.titular || datosPago.cuenta;
   $("aviso-pago").hidden = Boolean(hayPago);
-  $("copiar-cuenta").disabled = pendientes.length === 0;
+  $("enviar-cuenta").disabled = pendientes.length === 0;
   aviso("msg-cuenta", "");
 }
 
@@ -219,14 +219,22 @@ function textoParaWhatsApp() {
   return lineas.join("\n");
 }
 
-$("copiar-cuenta").addEventListener("click", async () => {
+// Abre WhatsApp directo al número del cliente, con el mensaje ya escrito
+$("enviar-cuenta").addEventListener("click", () => {
   if (!cuentaActual || cuentaActual.pendientes.length === 0) return;
-  try {
-    await navigator.clipboard.writeText(textoParaWhatsApp());
-    aviso("msg-cuenta", "Mensaje copiado ✓ Ya puedes pegarlo en WhatsApp.", "ok");
-  } catch (err) {
-    aviso("msg-cuenta", "No se pudo copiar el mensaje. Intenta otra vez.", "error");
-  }
+
+  const { cliente } = cuentaActual;
+  const tieneTelefono = soloDiez(cliente.telefono).length === 10;
+
+  window.open(enlaceWhatsApp(cliente.telefono, textoParaWhatsApp()), "_blank");
+
+  aviso(
+    "msg-cuenta",
+    tieneTelefono
+      ? "Abriendo WhatsApp con el mensaje para " + cliente.nombre + "…"
+      : cliente.nombre + " no tiene teléfono guardado: elige el chat en WhatsApp.",
+    "ok"
+  );
 });
 
 $("volver-cuenta").addEventListener("click", () => irA("clientes"));
