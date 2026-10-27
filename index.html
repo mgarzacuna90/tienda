@@ -112,6 +112,8 @@
     <form id="form-cliente" class="panel">
       <label for="cliente-nombre">Nombre</label>
       <input id="cliente-nombre" type="text" autocomplete="off" required>
+      <label for="cliente-telefono">Teléfono de WhatsApp (10 dígitos)</label>
+      <input id="cliente-telefono" type="tel" inputmode="tel" autocomplete="off">
       <button class="grande" type="submit" id="btn-cliente">Guardar cliente</button>
       <p id="msg-nuevo-cliente" class="mensaje" role="status"></p>
     </form>
@@ -135,6 +137,8 @@
       <form id="form-editar-cliente" hidden>
         <label for="editar-nombre">Nombre</label>
         <input id="editar-nombre" type="text" autocomplete="off" required>
+        <label for="editar-telefono">Teléfono de WhatsApp (10 dígitos)</label>
+        <input id="editar-telefono" type="tel" inputmode="tel" autocomplete="off">
         <button class="grande" type="submit" id="btn-editar-cliente">Guardar cambios</button>
         <button class="grande peligro" type="button" id="eliminar-cliente" style="margin-top: 0.75rem;">Eliminar cliente</button>
       </form>
@@ -179,7 +183,7 @@
     </div>
 
     <p id="aviso-pago" class="vacio" hidden>Aún no guardas tus datos de pago, así que el mensaje saldrá sin ellos.</p>
-    <button class="grande" type="button" id="copiar-cuenta">Copiar para WhatsApp</button>
+    <button class="grande" type="button" id="enviar-cuenta">Enviar por WhatsApp</button>
     <button class="grande secundario" type="button" id="ir-pago-cuenta" style="margin-top: 0.75rem;">Datos de pago</button>
   </section>
 
@@ -273,7 +277,12 @@
     <div class="panel">
       <div class="barra-acciones">
         <button class="secundario" type="button" id="llenar-faltantes">Llenar con lo que falta</button>
-        <button class="secundario" type="button" id="copiar-lista">Copiar lista</button>
+        <button class="secundario" type="button" id="enviar-lista">Enviar lista de productos</button>
+      </div>
+      <div id="elegir-destinatario" class="subform" hidden style="margin-bottom: 1rem;">
+        <p class="detalle" style="margin-top: 0;">¿A quién le envías la lista?</p>
+        <div id="botones-destinatario"></div>
+        <button class="grande secundario" type="button" id="cancelar-destinatario">Cancelar</button>
       </div>
       <ul id="lista-comprar" class="lista"></ul>
     </div>
@@ -350,10 +359,10 @@
 <script src="app.js?v=7"></script>
 <script src="productos.js?v=4"></script>
 <script src="ventas.js?v=5"></script>
-<script src="clientes.js?v=7"></script>
+<script src="clientes.js?v=8"></script>
 <script src="deudas.js?v=1"></script>
-<script src="cuenta.js?v=2"></script>
-<script src="comprar.js?v=2"></script>
+<script src="cuenta.js?v=3"></script>
+<script src="comprar.js?v=3"></script>
 <script src="historial.js?v=6"></script>
 <script src="inicio.js?v=2"></script>
 </body>
