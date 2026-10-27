@@ -1,9 +1,30 @@
 // ===== clientes.js: clientes, saldos, abonos, edición y baja =====
 
+// ---------- Ayudas para teléfonos y WhatsApp ----------
+const CODIGO_PAIS = "52"; // México
+
+// Deja solo los últimos 10 dígitos del teléfono
+function soloDiez(texto) {
+  return String(texto || "").replace(/\D/g, "").slice(-10);
+}
+
+// 8341874281 → 834 187 4281
+function formatoTelefono(texto) {
+  const d = soloDiez(texto);
+  return d.length === 10 ? d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6) : String(texto || "");
+}
+
+// Dirección que abre WhatsApp directo al número (o sin número, para elegir el chat)
+function enlaceWhatsApp(telefono, texto) {
+  const d = soloDiez(telefono);
+  const destino = d.length === 10 ? CODIGO_PAIS + d : "";
+  return "https://wa.me/" + destino + "?text=" + encodeURIComponent(texto);
+}
+
 async function cargarClientes() {
   const { data, error } = await db
     .from("saldo_clientes")
-    .select("id, nombre, saldo")
+    .select("id, nombre, telefono, saldo")
     .order("nombre", { ascending: true });
 
   if (error) {
@@ -43,15 +64,20 @@ function pintarClientes() {
     const fila = document.createElement("div");
     fila.className = "fila-item";
 
+    const izquierda = document.createElement("div");
     const nombre = document.createElement("div");
     nombre.className = "nombre";
     nombre.textContent = c.nombre;
+    const telefono = document.createElement("div");
+    telefono.className = "detalle";
+    telefono.textContent = c.telefono ? formatoTelefono(c.telefono) : "Sin teléfono";
+    izquierda.append(nombre, telefono);
 
     const saldo = document.createElement("div");
     saldo.className = "saldo " + (c.saldo > 0 ? "debe" : "limpio");
     saldo.textContent = c.saldo > 0 ? "Debe " + dinero.format(c.saldo) : "Sin deuda";
 
-    fila.append(nombre, saldo);
+    fila.append(izquierda, saldo);
     li.appendChild(fila);
 
     const acciones = document.createElement("div");
@@ -171,8 +197,16 @@ $("form-cliente").addEventListener("submit", async (e) => {
   boton.disabled = true;
   aviso("msg-nuevo-cliente", "");
 
+  const telefono = soloDiez($("cliente-telefono").value);
+  if (telefono && telefono.length !== 10) {
+    boton.disabled = false;
+    aviso("msg-nuevo-cliente", "El teléfono debe tener 10 dígitos.", "error");
+    return;
+  }
+
   const { error } = await db.from("clientes").insert({
     nombre: $("cliente-nombre").value.trim(),
+    telefono: telefono || null,
   });
 
   boton.disabled = false;
@@ -196,7 +230,10 @@ function clienteElegido() {
 function mostrarFormularioEditar(rellenar) {
   const c = clienteElegido();
   $("form-editar-cliente").hidden = !c;
-  if (c && rellenar) $("editar-nombre").value = c.nombre;
+  if (c && rellenar) {
+    $("editar-nombre").value = c.nombre;
+    $("editar-telefono").value = c.telefono ? formatoTelefono(c.telefono) : "";
+  }
 }
 
 function llenarSelectEditar() {
@@ -245,9 +282,18 @@ $("form-editar-cliente").addEventListener("submit", async (e) => {
     return;
   }
 
+  const telefono = soloDiez($("editar-telefono").value);
+  if (telefono && telefono.length !== 10) {
+    aviso("msg-editar-cliente", "El teléfono debe tener 10 dígitos.", "error");
+    return;
+  }
+
   const boton = $("btn-editar-cliente");
   boton.disabled = true;
-  const { error } = await db.from("clientes").update({ nombre: nuevoNombre }).eq("id", c.id);
+  const { error } = await db
+    .from("clientes")
+    .update({ nombre: nuevoNombre, telefono: telefono || null })
+    .eq("id", c.id);
   boton.disabled = false;
 
   if (error) {
