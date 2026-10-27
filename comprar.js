@@ -1,5 +1,11 @@
 // ===== comprar.js: lista de productos por comprar y registro de compras =====
 
+// Personas a las que se les puede enviar la lista por WhatsApp (cambia aquí nombres o teléfonos)
+const DESTINATARIOS_LISTA = [
+  { nombre: "Manuel Eduardo Acuña Garza", telefono: "8341327371" },
+  { nombre: "Julio Cesar Cano Aguilar", telefono: "8333037800" },
+];
+
 function productosPorComprar() {
   return productos
     .filter(estaBajo)
@@ -77,6 +83,7 @@ function pintarComprar() {
 
 $("ir-comprar").addEventListener("click", () => {
   aviso("msg-comprar", "");
+  cerrarDestinatarios();
   irA("comprar");
 });
 $("volver-comprar").addEventListener("click", () => irA("productos"));
@@ -130,21 +137,41 @@ $("guardar-compras").addEventListener("click", async () => {
   window.scrollTo(0, 0);
 });
 
-// Copia la lista para pegarla en WhatsApp u otra app
-$("copiar-lista").addEventListener("click", async () => {
-  const lista = productosPorComprar();
-  if (lista.length === 0) {
+// ---------- Enviar la lista por WhatsApp ----------
+function textoLista() {
+  const lineas = productosPorComprar().map((p) => "• " + p.nombre + (p.faltan > 0 ? ": " + p.faltan : ""));
+  return "Por comprar:\n" + lineas.join("\n");
+}
+
+function cerrarDestinatarios() {
+  $("elegir-destinatario").hidden = true;
+}
+
+// Muestra a quién se le puede enviar la lista
+$("enviar-lista").addEventListener("click", () => {
+  if (productosPorComprar().length === 0) {
     aviso("msg-comprar", "No hay nada por comprar.", "ok");
     return;
   }
+  aviso("msg-comprar", "");
 
-  const lineas = lista.map((p) => "• " + p.nombre + (p.faltan > 0 ? ": " + p.faltan : ""));
-  const texto = "Por comprar:\n" + lineas.join("\n");
-
-  try {
-    await navigator.clipboard.writeText(texto);
-    aviso("msg-comprar", "Lista copiada ✓ Ya puedes pegarla en WhatsApp.", "ok");
-  } catch (err) {
-    aviso("msg-comprar", "No se pudo copiar la lista. Cópiala a mano desde la pantalla.", "error");
+  const botones = $("botones-destinatario");
+  botones.replaceChildren();
+  for (const persona of DESTINATARIOS_LISTA) {
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "grande";
+    boton.style.marginBottom = "0.5rem";
+    boton.textContent = persona.nombre;
+    boton.addEventListener("click", () => {
+      cerrarDestinatarios();
+      window.open(enlaceWhatsApp(persona.telefono, textoLista()), "_blank");
+      aviso("msg-comprar", "Abriendo WhatsApp con la lista para " + persona.nombre + "…", "ok");
+    });
+    botones.appendChild(boton);
   }
+
+  $("elegir-destinatario").hidden = false;
 });
+
+$("cancelar-destinatario").addEventListener("click", cerrarDestinatarios);
