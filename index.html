@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
-<link rel="stylesheet" href="extras.css?v=5">
+<link rel="stylesheet" href="extras.css?v=6">
 </head>
 <body class="rol-vendedor">
 <main>
@@ -82,7 +82,7 @@
   <!-- PANTALLA 3: clientes -->
   <section id="vista-clientes" class="admin" hidden>
     <div class="encabezado">
-      <h1>Clientes</h1>
+      <h1 id="titulo-clientes">Clientes</h1>
       <button class="secundario js-salir" type="button">Salir</button>
     </div>
     <div class="barra-acciones tres solo-dueno">
@@ -94,7 +94,6 @@
 
     <div class="panel">
       <p class="total-cobrar solo-dueno" id="total-por-cobrar"></p>
-      <button class="grande secundario solo-dueno" type="button" id="ir-deudas" style="margin-bottom: 0.9rem;">Cargar deudas de otra aplicación</button>
       <ul id="lista-clientes" class="lista"></ul>
     </div>
   </section>
@@ -143,25 +142,6 @@
         <button class="grande peligro" type="button" id="eliminar-cliente" style="margin-top: 0.75rem;">Eliminar cliente</button>
       </form>
     </div>
-  </section>
-
-  <!-- PANTALLA 3b3: deudas anteriores (de otra aplicación) -->
-  <section id="vista-deudas" class="admin" hidden>
-    <div class="encabezado">
-      <h1>Deudas anteriores</h1>
-      <div class="acciones-encabezado">
-        <button class="secundario" type="button" id="volver-deudas">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
-      </div>
-    </div>
-    <p id="msg-deudas" class="mensaje" role="status"></p>
-
-    <div class="panel">
-      <p class="detalle" style="margin-top: 0;">Escribe cuánto debía cada cliente en tu otra aplicación. Se guarda como "Saldo anterior": suma a lo que debe, pero no cuenta como una venta. Para quitarla, deja la casilla vacía o en 0.</p>
-      <ul id="lista-deudas" class="lista"></ul>
-    </div>
-
-    <button class="grande" type="button" id="guardar-deudas">Guardar deudas</button>
   </section>
 
   <!-- PANTALLA 3c: estado de cuenta de un cliente -->
@@ -274,6 +254,8 @@
     </div>
     <p id="msg-comprar" class="mensaje" role="status"></p>
 
+    <button class="grande secundario" type="button" id="ir-pendientes" style="margin-bottom: 0.9rem;">Compras sin pagar</button>
+
     <div class="panel">
       <div class="barra-acciones">
         <button class="secundario" type="button" id="llenar-faltantes">Llenar con lo que falta</button>
@@ -287,7 +269,32 @@
       <ul id="lista-comprar" class="lista"></ul>
     </div>
 
+    <div id="datos-compra" class="panel" hidden>
+      <h2>Datos de la compra</h2>
+      <label for="compra-costo">¿Cuánto costó en total? (pesos)</label>
+      <input id="compra-costo" type="number" inputmode="numeric" min="0" step="1">
+      <label>¿Ya se pagó?</label>
+      <div class="fila">
+        <button type="button" id="pagada-si" class="secundario" aria-pressed="false">Sí</button>
+        <button type="button" id="pagada-no" class="secundario" aria-pressed="false">No</button>
+      </div>
+    </div>
+
     <button class="grande" type="button" id="guardar-compras">Guardar compras</button>
+  </section>
+
+  <!-- PANTALLA 4c: compras sin pagar -->
+  <section id="vista-pendientes" class="admin" hidden>
+    <div class="encabezado">
+      <h1>Compras sin pagar</h1>
+      <button class="secundario js-salir" type="button">Salir</button>
+    </div>
+    <p id="msg-pendientes" class="mensaje" role="status"></p>
+
+    <div class="panel">
+      <p class="total-cobrar" id="pendientes-total"></p>
+      <ul id="lista-pendientes" class="lista"></ul>
+    </div>
   </section>
 
   <!-- PANTALLA 5: historial -->
@@ -356,13 +363,13 @@
 
 <!-- Los archivos van en este orden: no lo cambies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 <script src="productos.js?v=4"></script>
 <script src="ventas.js?v=5"></script>
 <script src="clientes.js?v=8"></script>
-<script src="deudas.js?v=1"></script>
 <script src="cuenta.js?v=3"></script>
-<script src="comprar.js?v=3"></script>
+<script src="comprar.js?v=4"></script>
+<script src="pendientes.js?v=1"></script>
 <script src="historial.js?v=6"></script>
 <script src="inicio.js?v=2"></script>
 </body>
