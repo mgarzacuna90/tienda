@@ -27,6 +27,7 @@ function pintarComprar() {
   const ul = $("lista-comprar");
   ul.replaceChildren();
   $("guardar-compras").hidden = lista.length === 0;
+  $("datos-compra").hidden = lista.length === 0;
 
   if (lista.length === 0) {
     const vacio = document.createElement("li");
@@ -97,7 +98,21 @@ $("llenar-faltantes").addEventListener("click", () => {
   pintarComprar();
 });
 
-// Guarda todas las compras escritas, de una sola vez
+// ---------- ¿Ya se pagó la compra? ----------
+let compraPagada = null; // null = sin elegir, true = sí, false = no
+
+function ponerPagada(valor) {
+  compraPagada = valor;
+  $("pagada-si").classList.toggle("secundario", valor !== true);
+  $("pagada-no").classList.toggle("secundario", valor !== false);
+  $("pagada-si").setAttribute("aria-pressed", String(valor === true));
+  $("pagada-no").setAttribute("aria-pressed", String(valor === false));
+}
+
+$("pagada-si").addEventListener("click", () => ponerPagada(true));
+$("pagada-no").addEventListener("click", () => ponerPagada(false));
+
+// Guarda todas las compras escritas, de una sola vez, con su costo
 $("guardar-compras").addEventListener("click", async () => {
   const items = [];
   for (const [id, texto] of Object.entries(compras)) {
@@ -111,12 +126,27 @@ $("guardar-compras").addEventListener("click", async () => {
     return;
   }
 
+  const costoTexto = $("compra-costo").value;
+  if (costoTexto === "" || !(redondear(costoTexto) >= 0)) {
+    aviso("msg-comprar", "Escribe cuánto costó la compra en total.", "error");
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (compraPagada === null) {
+    aviso("msg-comprar", "Elige si ya se pagó la compra: Sí o No.", "error");
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  const costo = redondear(costoTexto);
+  const pagada = compraPagada;
+
   const boton = $("guardar-compras");
   boton.disabled = true;
   aviso("msg-comprar", "Guardando…");
 
-  // Esta función de Supabase suma todas las cantidades al inventario en un solo paso.
-  const { error } = await db.rpc("sumar_inventario", { items });
+  // Esta función de Supabase suma las cantidades al inventario y guarda la compra, en un solo paso.
+  const { error } = await db.rpc("registrar_compra", { items, p_costo: costo, p_pagada: pagada });
   boton.disabled = false;
 
   if (error) {
@@ -126,15 +156,25 @@ $("guardar-compras").addEventListener("click", async () => {
   }
 
   compras = {};
+  $("compra-costo").value = "";
+  ponerPagada(null);
   await cargarProductos();
+  await cargarPendientesPago();
 
   const siguen = items.filter((i) => productosPorComprar().some((p) => p.id === i.producto_id)).length;
   let texto = "Compras guardadas ✓ " + items.length + (items.length === 1 ? " producto actualizado." : " productos actualizados.");
   if (siguen > 0) {
     texto += " " + siguen + (siguen === 1 ? " sigue" : " siguen") + " en la lista porque aún no llega al mínimo.";
   }
-  aviso("msg-comprar", texto, "ok");
-  window.scrollTo(0, 0);
+
+  if (pagada) {
+    aviso("msg-comprar", texto + " Costo: " + dinero.format(costo) + ", ya pagada.", "ok");
+    window.scrollTo(0, 0);
+  } else {
+    // Si no se ha pagado, se muestra la lista de compras sin pagar
+    aviso("msg-pendientes", "Compra guardada ✓ Quedó pendiente de pago por " + dinero.format(costo) + ".", "ok");
+    irA("pendientes");
+  }
 });
 
 // ---------- Enviar la lista por WhatsApp ----------
