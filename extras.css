@@ -125,3 +125,13 @@ body:not(.rol-vendedor) .admin .barra-acciones.tres button {
   font-size: 0.78rem;
   line-height: 1.15;
 }
+
+/* Los botones "Volver" ya no se ven: para regresar se usa el botón atrás del celular */
+#volver-carrito,
+#volver-nuevo-cliente,
+#volver-editar-cliente,
+#volver-cuenta,
+#volver-pago,
+#volver-nuevo-producto,
+#volver-comprar,
+#volver-historial { display: none !important; }
