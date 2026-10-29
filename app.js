@@ -15,6 +15,7 @@ const vistas = {
   clientes: $("vista-clientes"),
   productos: $("vista-productos"),
   comprar: $("vista-comprar"),
+  pendientes: $("vista-pendientes"),
   historial: $("vista-historial"),
   nuevocliente: $("vista-nuevo-cliente"),
   editarcliente: $("vista-editar-cliente"),
@@ -36,6 +37,7 @@ const PESTANA = {
   productos: "productos",
   nuevoproducto: "productos",
   comprar: "productos",
+  pendientes: "productos",
 };
 
 let productos = [];         // lista de productos que viene de la base de datos
@@ -95,6 +97,11 @@ async function cargarRol() {
   }
   esDueno = dueno;
   document.body.classList.toggle("rol-vendedor", !esDueno);
+
+  // Quien no es dueño ve "Cuentas por cobrar" en lugar de "Clientes"
+  const nombrePestana = esDueno ? "Clientes" : "Cuentas por cobrar";
+  $("nav-clientes").textContent = nombrePestana;
+  $("titulo-clientes").textContent = nombrePestana;
 }
 
 // ---------- 4. Mostrar una pantalla u otra ----------
@@ -104,15 +111,20 @@ async function mostrar(sesionActiva) {
 
   if (sesionActiva) {
     await cargarRol();
-    irA(vistaActual);
+    irA(vistaActual, true);
     cargarProductos();
     cargarClientes();
-    if (esDueno) cargarPago();
+    if (esDueno) {
+      cargarPago();
+      cargarPendientesPago();
+    }
   } else {
     for (const nombre in vistas) vistas[nombre].hidden = true;
     esDueno = false;
     document.body.classList.add("rol-vendedor");
     vistaActual = "vender";
+    posicion = 0;
+    pilaVistas.length = 1;
     carrito = {};
     compras = {};
     abonandoId = null;
@@ -120,8 +132,21 @@ async function mostrar(sesionActiva) {
   }
 }
 
-function irA(nombre) {
+// ---------- 5. Navegación con el botón "atrás" del celular ----------
+let posicion = 0;              // lugar de la pantalla actual en el historial de la app
+const pilaVistas = ["vender"]; // nombre de la pantalla en cada lugar del historial
+
+function irA(nombre, sinHistorial) {
   if (!esDueno && !VISTAS_VENDEDOR.includes(nombre)) nombre = "vender";
+
+  // Si se pide la pantalla anterior, es como tocar "atrás": usamos el historial del navegador
+  // (así el botón atrás del celular no vuelve a formularios que ya se guardaron).
+  if (!sinHistorial && nombre !== vistaActual && posicion > 0 && pilaVistas[posicion - 1] === nombre) {
+    history.back();
+    return;
+  }
+
+  const cambio = nombre !== vistaActual;
   vistaActual = nombre;
   const pestana = PESTANA[nombre];
   for (const clave in vistas) {
@@ -129,9 +154,30 @@ function irA(nombre) {
     const boton = $("nav-" + clave);
     if (boton) boton.classList.toggle("activo", clave === pestana);
   }
+
+  // Cada pantalla nueva se anota en el historial para que "atrás" regrese a la anterior
+  if (!sinHistorial && cambio) {
+    posicion += 1;
+    pilaVistas.length = posicion;
+    pilaVistas[posicion] = nombre;
+    history.pushState({ vista: nombre, n: posicion }, "");
+  }
+
   actualizarCobro();
   window.scrollTo(0, 0);
 }
+
+// Al tocar "atrás" en el celular
+window.addEventListener("popstate", (evento) => {
+  if ($("pie").hidden) return; // sin sesión no hay pantallas que mostrar
+  const estado = evento.state;
+  posicion = estado && typeof estado.n === "number" ? estado.n : 0;
+  pilaVistas.length = posicion + 1;
+  irA(estado && estado.vista ? estado.vista : "vender", true);
+});
+
+// La pantalla inicial es el primer lugar del historial
+history.replaceState({ vista: "vender", n: 0 }, "");
 
 $("nav-vender").addEventListener("click", () => irA("vender"));
 $("nav-clientes").addEventListener("click", () => irA("clientes"));
