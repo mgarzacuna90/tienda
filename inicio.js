@@ -22,9 +22,14 @@ $("form-login").addEventListener("submit", async (e) => {
 // ---------- Salir ----------
 document.querySelectorAll(".js-salir").forEach((boton) => {
   boton.addEventListener("click", async () => {
+    // La ✕ de quien no es dueño es pequeña: pedimos confirmar para no salir por accidente
+    if (!esDueno && !window.confirm("¿Quieres cerrar la sesión?")) return;
     await db.auth.signOut();
   });
 });
+
+// ---------- Botón "Cuentas por cobrar" de la pantalla Vender (segundo usuario) ----------
+$("ir-cuentas").addEventListener("click", () => irA("clientes"));
 
 db.auth.onAuthStateChange((_evento, sesion) => {
   // setTimeout evita que Supabase se trabe al hacer otras consultas aquí dentro.
