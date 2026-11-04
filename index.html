@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
-<link rel="stylesheet" href="extras.css?v=6">
+<link rel="stylesheet" href="extras.css?v=7">
 </head>
 <body class="rol-vendedor">
 <main>
@@ -33,10 +33,11 @@
   <!-- PANTALLA 2: vender -->
   <section id="vista-vender" hidden>
     <div class="encabezado encabezado-chico">
-      <h1>Vender</h1>
+      <h1 id="titulo-vender">Vender</h1>
+      <button class="secundario solo-vendedor" type="button" id="ir-cuentas">Cuentas por cobrar</button>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="ir-historial">Historial</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
     <p id="msg-venta" class="mensaje" role="status"></p>
@@ -53,7 +54,7 @@
       <h1>Carrito</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-carrito">Seguir</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
     <p id="msg-carrito" class="mensaje" role="status"></p>
@@ -83,7 +84,7 @@
   <section id="vista-clientes" class="admin" hidden>
     <div class="encabezado">
       <h1 id="titulo-clientes">Clientes</h1>
-      <button class="secundario js-salir" type="button">Salir</button>
+      <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
     </div>
     <div class="barra-acciones tres solo-dueno">
       <button class="secundario" type="button" id="ir-nuevo-cliente">Nuevo cliente</button>
@@ -104,7 +105,7 @@
       <h1>Nuevo cliente</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-nuevo-cliente">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
 
@@ -124,7 +125,7 @@
       <h1>Editar cliente</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-editar-cliente">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
     <p id="msg-editar-cliente" class="mensaje" role="status"></p>
@@ -150,7 +151,7 @@
       <h1>Cuenta</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-cuenta">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
     <p id="msg-cuenta" class="mensaje" role="status"></p>
@@ -173,7 +174,7 @@
       <h1>Datos de pago</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-pago">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
 
@@ -196,7 +197,7 @@
   <section id="vista-productos" class="admin" hidden>
     <div class="encabezado">
       <h1>Productos</h1>
-      <button class="secundario js-salir" type="button">Salir</button>
+      <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
     </div>
     <div class="barra-acciones tres">
       <button class="secundario" type="button" id="ir-nuevo-producto">Nuevo producto</button>
@@ -217,7 +218,7 @@
       <h1>Nuevo producto</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-nuevo-producto">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
 
@@ -249,7 +250,7 @@
       <h1>Por comprar</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-comprar">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
     <p id="msg-comprar" class="mensaje" role="status"></p>
@@ -287,7 +288,7 @@
   <section id="vista-pendientes" class="admin" hidden>
     <div class="encabezado">
       <h1>Compras sin pagar</h1>
-      <button class="secundario js-salir" type="button">Salir</button>
+      <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
     </div>
     <p id="msg-pendientes" class="mensaje" role="status"></p>
 
@@ -303,7 +304,7 @@
       <h1>Historial</h1>
       <div class="acciones-encabezado">
         <button class="secundario" type="button" id="volver-historial">Volver</button>
-        <button class="secundario js-salir" type="button">Salir</button>
+        <button class="secundario js-salir" type="button" aria-label="Salir" title="Salir">Salir</button>
       </div>
     </div>
     <p id="msg-historial" class="mensaje" role="status"></p>
@@ -371,6 +372,6 @@
 <script src="comprar.js?v=4"></script>
 <script src="pendientes.js?v=1"></script>
 <script src="historial.js?v=6"></script>
-<script src="inicio.js?v=2"></script>
+<script src="inicio.js?v=3"></script>
 </body>
 </html>
