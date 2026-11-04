@@ -76,7 +76,8 @@
 
 /* Encabezado más bajo en Vender, y sin espacio cuando no hay mensaje */
 .encabezado-chico { padding: 0.25rem 0 0.5rem; }
-.encabezado-chico button { min-height: 2.6rem; padding: 0.3rem 0.9rem; }
+.encabezado-chico h1 { font-size: 1.4rem; }
+.encabezado-chico button { min-height: 2.6rem; padding: 0.3rem 0.6rem; font-size: 0.85rem; }
 #msg-venta:empty { display: none; }
 
 /* Lo que solo ve el dueño */
@@ -135,3 +136,101 @@ body:not(.rol-vendedor) .admin .barra-acciones.tres button {
 #volver-nuevo-producto,
 #volver-comprar,
 #volver-historial { display: none !important; }
+
+/* ===== Carrito: más compacto y sutil, para ver 4 productos sin desplazarte ===== */
+#vista-carrito .encabezado { padding: 0.25rem 0 0.4rem; }
+#vista-carrito .encabezado button { min-height: 2.4rem; padding: 0.3rem 0.8rem; font-size: 0.85rem; }
+#msg-carrito:empty { display: none; }
+#vista-carrito .panel { padding: 0.5rem 0.75rem; margin-bottom: 0.8rem; }
+
+#lista-carrito .item {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  column-gap: 0.6rem;
+  row-gap: 0.15rem;
+  align-items: center;
+  padding: 0.35rem 0;
+}
+#lista-carrito .fila-item,
+#lista-carrito .con-foto { display: contents; }
+#lista-carrito .foto-chica {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 2.6rem;
+  height: 2.6rem;
+  font-size: 1.1rem;
+}
+#lista-carrito .con-foto > div:last-child { grid-column: 2; grid-row: 1; min-width: 0; }
+#lista-carrito .nombre {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#lista-carrito .detalle { font-size: 0.75rem; line-height: 1.2; }
+#lista-carrito .fila-item > .precio { grid-column: 3; grid-row: 1; font-size: 1rem; margin: 0; }
+#lista-carrito .controles-carrito { grid-column: 2 / 4; grid-row: 2; margin-top: 0; }
+#lista-carrito .cantidad { gap: 0.35rem; }
+#lista-carrito .cantidad .num { min-width: 1.4rem; font-size: 1rem; }
+#lista-carrito .cantidad button.paso {
+  width: 1.8rem;
+  height: 1.8rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  background: #fff;
+  color: var(--acento);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+}
+#lista-carrito .controles-carrito > button.peligro {
+  min-height: 1.8rem;
+  padding: 0 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  background: transparent;
+  border: 0;
+  color: var(--error);
+}
+#vista-carrito .total-grande { font-size: 1.15rem; margin-top: 0.4rem; padding-top: 0.4rem; }
+
+/* ===== Segundo usuario (vendedor) ===== */
+body:not(.rol-vendedor) .solo-vendedor { display: none !important; }
+body.rol-vendedor #titulo-vender { display: none; }
+body.rol-vendedor #ir-cuentas,
+body.rol-vendedor #ir-historial { font-size: 0.8rem; padding: 0.3rem 0.7rem; }
+body.rol-vendedor #ir-cuentas { line-height: 1.1; text-align: left; }
+
+/* Sin barra de pestañas abajo (el botón de Cuentas por cobrar está arriba) */
+body.rol-vendedor #pie nav { display: none; }
+body.rol-vendedor #pie { border-top: 0; background: transparent; }
+@supports (height: 100svh) {
+  body.rol-vendedor { --alto-tarjeta: clamp(6.5rem, calc((100svh - 12.5rem) / 3), 13rem); }
+}
+
+/* "Salir" se convierte en una ✕ roja discreta en la esquina */
+body.rol-vendedor button.js-salir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  min-height: 0;
+  padding: 0;
+  font-size: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+}
+body.rol-vendedor button.js-salir::before {
+  content: "✕";
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--error);
+}
+body.rol-vendedor button.js-salir:hover,
+body.rol-vendedor button.js-salir:active { background: transparent; }
