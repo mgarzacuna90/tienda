@@ -397,5 +397,3 @@ $("ir-nuevo-producto").addEventListener("click", () => {
   aviso("msg-agregar", "");
   irA("nuevoproducto");
 });
-
-$("volver-nuevo-producto").addEventListener("click", () => irA("productos"));
