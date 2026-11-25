@@ -375,5 +375,3 @@ $("ir-historial").addEventListener("click", () => {
   irA("historial");
   cargarHistorial();
 });
-
-$("volver-historial").addEventListener("click", () => irA("vender"));
