@@ -189,8 +189,6 @@ $("ir-nuevo-cliente").addEventListener("click", () => {
   irA("nuevocliente");
 });
 
-$("volver-nuevo-cliente").addEventListener("click", () => irA("clientes"));
-
 $("form-cliente").addEventListener("submit", async (e) => {
   e.preventDefault();
   const boton = $("btn-cliente");
@@ -263,8 +261,6 @@ $("ir-editar-cliente").addEventListener("click", () => {
   aviso("msg-editar-cliente", "");
   irA("editarcliente");
 });
-
-$("volver-editar-cliente").addEventListener("click", () => irA("clientes"));
 
 $("sel-editar-cliente").addEventListener("change", () => {
   aviso("msg-editar-cliente", "");
