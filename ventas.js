@@ -111,7 +111,6 @@ function actualizarCobro() {
 }
 
 $("btn-ver-carrito").addEventListener("click", () => irA("carrito"));
-$("volver-carrito").addEventListener("click", () => irA("vender"));
 
 // ---------- Pantalla del carrito ----------
 function pintarCarrito() {
