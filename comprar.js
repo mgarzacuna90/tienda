@@ -81,7 +81,6 @@ $("ir-comprar").addEventListener("click", () => {
   cerrarDestinatarios();
   irA("comprar");
 });
-$("volver-comprar").addEventListener("click", () => irA("productos"));
 
 // Llena cada casilla con lo que falta para llegar al mínimo
 $("llenar-faltantes").addEventListener("click", () => {
