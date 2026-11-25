@@ -127,16 +127,6 @@ body:not(.rol-vendedor) .admin .barra-acciones.tres button {
   line-height: 1.15;
 }
 
-/* Los botones "Volver" ya no se ven: para regresar se usa el botón atrás del celular */
-#volver-carrito,
-#volver-nuevo-cliente,
-#volver-editar-cliente,
-#volver-cuenta,
-#volver-pago,
-#volver-nuevo-producto,
-#volver-comprar,
-#volver-historial { display: none !important; }
-
 /* ===== Carrito: más compacto y sutil, para ver 4 productos sin desplazarte ===== */
 #vista-carrito .encabezado { padding: 0.25rem 0 0.4rem; }
 #vista-carrito .encabezado button { min-height: 2.4rem; padding: 0.3rem 0.8rem; font-size: 0.85rem; }
