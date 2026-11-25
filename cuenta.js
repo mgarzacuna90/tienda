@@ -2,7 +2,6 @@
 
 let datosPago = { banco: "", titular: "", cuenta: "", nota: "" }; // tus datos para recibir depósitos
 let cuentaActual = null;       // { cliente, pendientes, saldo } de la cuenta que se está viendo
-let pagoVolverA = "clientes";  // a dónde regresa la pantalla de datos de pago
 
 function fechaCorta(texto) {
   return new Date(texto).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
@@ -25,8 +24,7 @@ async function cargarPago() {
   };
 }
 
-function abrirPago(volverA) {
-  pagoVolverA = volverA;
+function abrirPago() {
   $("pago-banco").value = datosPago.banco;
   $("pago-titular").value = datosPago.titular;
   $("pago-cuenta").value = datosPago.cuenta;
@@ -35,17 +33,8 @@ function abrirPago(volverA) {
   irA("pago");
 }
 
-$("ir-pago").addEventListener("click", () => abrirPago("clientes"));
-$("ir-pago-cuenta").addEventListener("click", () => abrirPago("cuenta"));
-
-$("volver-pago").addEventListener("click", () => {
-  if (pagoVolverA === "cuenta" && cuentaActual) {
-    pintarCuenta();
-    irA("cuenta");
-  } else {
-    irA("clientes");
-  }
-});
+$("ir-pago").addEventListener("click", abrirPago);
+$("ir-pago-cuenta").addEventListener("click", abrirPago);
 
 $("form-pago").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -236,5 +225,3 @@ $("enviar-cuenta").addEventListener("click", () => {
     "ok"
   );
 });
-
-$("volver-cuenta").addEventListener("click", () => irA("clientes"));
