@@ -224,3 +224,16 @@ body.rol-vendedor button.js-salir::before {
 }
 body.rol-vendedor button.js-salir:hover,
 body.rol-vendedor button.js-salir:active { background: transparent; }
+
+/* ===== Configuración, gastos y filtro del resumen (noviembre de 2026) ===== */
+.filtro-resumen { margin: 0.9rem 0 0.6rem; }
+.filtro-resumen button { padding: 0.5rem 0.3rem; }
+.tabla-scroll { overflow-x: auto; }
+.tabla-gastos { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.tabla-gastos th { text-align: left; color: var(--apagado); font-weight: 700; padding: 0.3rem 0.25rem; }
+.tabla-gastos td { padding: 0.35rem 0.25rem; vertical-align: top; border-top: 1px solid var(--borde); }
+.tabla-gastos tr.inicio-compra td { border-top: 2px solid var(--borde); }
+.tabla-gastos .num { text-align: right; white-space: nowrap; }
+.tabla-gastos td:first-child { white-space: nowrap; }
+.tabla-gastos .detalle { font-size: 0.7rem; }
+.sin-pagar { color: var(--error); font-weight: 700; font-size: 0.7rem; }

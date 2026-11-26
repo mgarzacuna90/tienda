@@ -34,7 +34,6 @@ function abrirPago() {
 }
 
 $("ir-pago").addEventListener("click", abrirPago);
-$("ir-pago-cuenta").addEventListener("click", abrirPago);
 
 $("form-pago").addEventListener("submit", async (e) => {
   e.preventDefault();

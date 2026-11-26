@@ -1,4 +1,4 @@
-// ===== historial.js: historial de ventas y abonos por día, y resúmenes =====
+// ===== historial.js: historial de ventas y abonos por día (los resúmenes están en resumen.js) =====
 
 // Fecha de hoy como texto AAAA-MM-DD (en la hora de tu celular)
 function hoyTexto() {
@@ -201,92 +201,6 @@ function pintarHistorial(ventas, abonos, ultimaId) {
   }
 }
 
-// ---------- Resúmenes semanal, mensual y anual ----------
-const corto = (fecha) => fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
-
-// Semana (lunes a domingo), mes y año del día elegido
-function periodosDe(diaTexto) {
-  const [anio, mes, dia] = diaTexto.split("-").map(Number);
-  const f = new Date(anio, mes - 1, dia);
-  const desdeLunes = (f.getDay() + 6) % 7;
-
-  const mesTexto = f.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
-
-  return [
-    {
-      titulo: "Semana del " + corto(new Date(anio, mes - 1, dia - desdeLunes)) +
-        " al " + corto(new Date(anio, mes - 1, dia - desdeLunes + 6)),
-      inicio: new Date(anio, mes - 1, dia - desdeLunes),
-      fin: new Date(anio, mes - 1, dia - desdeLunes + 7),
-    },
-    {
-      titulo: "Mes: " + mesTexto.charAt(0).toUpperCase() + mesTexto.slice(1),
-      inicio: new Date(anio, mes - 1, 1),
-      fin: new Date(anio, mes, 1),
-    },
-    {
-      titulo: "Año " + anio,
-      inicio: new Date(anio, 0, 1),
-      fin: new Date(anio + 1, 0, 1),
-    },
-  ];
-}
-
-function filaResumen(etiqueta, valor, destacada) {
-  const fila = document.createElement("div");
-  fila.className = "resumen-fila" + (destacada ? " destacado" : "");
-  const izquierda = document.createElement("span");
-  izquierda.textContent = etiqueta;
-  const derecha = document.createElement("strong");
-  derecha.textContent = valor;
-  fila.append(izquierda, derecha);
-  return fila;
-}
-
-async function cargarResumenes(diaTexto) {
-  const periodos = periodosDe(diaTexto);
-
-  // Esta función de Supabase suma las ventas y abonos de cada periodo
-  const resultados = await Promise.all(
-    periodos.map((p) =>
-      db.rpc("resumen_periodo", { p_inicio: p.inicio.toISOString(), p_fin: p.fin.toISOString() })
-    )
-  );
-
-  const contenedor = $("resumenes");
-  contenedor.replaceChildren();
-
-  periodos.forEach((p, i) => {
-    const bloque = document.createElement("div");
-    bloque.className = "bloque-resumen";
-
-    const titulo = document.createElement("h3");
-    titulo.textContent = p.titulo;
-    bloque.appendChild(titulo);
-
-    const res = resultados[i];
-    if (res.error || !res.data || !res.data[0]) {
-      const aviso = document.createElement("p");
-      aviso.className = "vacio";
-      aviso.textContent = "No se pudo cargar este resumen.";
-      bloque.appendChild(aviso);
-    } else {
-      const d = res.data[0];
-      const contado = Number(d.contado);
-      const abonos = Number(d.abonos);
-      bloque.append(
-        filaResumen("Ventas (" + Number(d.num_ventas) + ")", dinero.format(redondear(d.total))),
-        filaResumen("De contado", dinero.format(redondear(contado))),
-        filaResumen("A crédito", dinero.format(redondear(d.credito))),
-        filaResumen("Abonos recibidos", dinero.format(redondear(abonos))),
-        filaResumen("Dinero recibido", dinero.format(redondear(contado + abonos)), true)
-      );
-    }
-
-    contenedor.appendChild(bloque);
-  });
-}
-
 // ---------- Eliminar una venta o un abono equivocado ----------
 async function eliminarVenta(v) {
   let pregunta;
@@ -346,18 +260,20 @@ async function reiniciarHistorial(conservarDeudas) {
   const palabra = window.prompt("Segunda confirmación: escribe BORRAR (en mayúsculas) para continuar.");
   if (palabra === null) return;
   if (palabra.trim() !== "BORRAR") {
-    aviso("msg-historial", "No se borró nada: la palabra no coincidía.", "error");
+    aviso("msg-config", "No se borró nada: la palabra no coincidía.", "error");
     window.scrollTo(0, 0);
     return;
   }
 
   const { error } = await db.rpc("reiniciar_historial", { p_conservar_deudas: conservarDeudas });
   if (error) {
-    aviso("msg-historial", "No se pudo reiniciar el historial. Intenta otra vez.", "error");
+    aviso("msg-config", "No se pudo reiniciar el historial. Intenta otra vez.", "error");
     window.scrollTo(0, 0);
     return;
   }
 
+  // Se vuelve al Historial para ver el resultado
+  irA("historial");
   await Promise.all([cargarHistorial(), cargarClientes()]);
   aviso("msg-historial", "Historial reiniciado ✓", "ok");
   window.scrollTo(0, 0);
