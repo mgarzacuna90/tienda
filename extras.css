@@ -237,3 +237,7 @@ body.rol-vendedor button.js-salir:active { background: transparent; }
 .tabla-gastos td:first-child { white-space: nowrap; }
 .tabla-gastos .detalle { font-size: 0.7rem; }
 .sin-pagar { color: var(--error); font-weight: 700; font-size: 0.7rem; }
+
+/* ===== Compras por cliente (noviembre de 2026) ===== */
+.detalle-compras { margin-top: 0.5rem; padding-left: 0.6rem; border-left: 3px solid var(--borde); }
+.linea-compra { padding: 0.3rem 0; font-size: 0.85rem; }

@@ -54,20 +54,33 @@ async function leerPorCobrar() {
   }, 0);
 }
 
-// Dinero escrito a mano por el dueño (tabla ajustes). Devuelve null si falla
+// Dinero en cuenta y en efectivo, escrito a mano por el dueño (tabla ajustes). Devuelve null si falla
 async function leerDinero() {
   const { data, error } = await db
     .from("ajustes")
-    .select("dinero_cuenta, dinero_efectivo, dinero_invertido")
+    .select("dinero_cuenta, dinero_efectivo")
     .eq("id", 1)
     .maybeSingle();
   if (error) return null;
-  if (!data) return { cuenta: 0, efectivo: 0, invertido: 0 };
+  if (!data) return { cuenta: 0, efectivo: 0 };
   return {
     cuenta: Number(data.dinero_cuenta) || 0,
     efectivo: Number(data.dinero_efectivo) || 0,
-    invertido: Number(data.dinero_invertido) || 0,
   };
+}
+
+// Dinero invertido: suma de las recompras pagadas desde la fecha de inicio (la calcula la base)
+async function leerInvertido() {
+  const { data, error } = await db.rpc("invertido_total");
+  if (error) return null;
+  return Number(data) || 0;
+}
+
+// Fecha desde la que se cuenta el dinero invertido (null si falla)
+async function leerDesde() {
+  const { data, error } = await db.from("ajustes").select("invertido_desde").eq("id", 1).maybeSingle();
+  if (error || !data) return null;
+  return data.invertido_desde;
 }
 
 function mensajeVacio(texto) {
@@ -83,10 +96,11 @@ async function cargarResumenes(diaTexto) {
   const numero = ++pedidoResumen;
 
   // Una consulta por cada dato; las funciones de Supabase suman las ventas y abonos del periodo
-  const [res, porCobrar, dineroMano] = await Promise.all([
+  const [res, porCobrar, dineroMano, invertido] = await Promise.all([
     db.rpc("resumen_periodo", { p_inicio: periodo.inicio.toISOString(), p_fin: periodo.fin.toISOString() }),
     leerPorCobrar(),
     esDueno ? leerDinero() : Promise.resolve(undefined),
+    esDueno ? leerInvertido() : Promise.resolve(undefined),
   ]);
   if (numero !== pedidoResumen) return; // llegó otra petición más nueva
 
@@ -95,9 +109,9 @@ async function cargarResumenes(diaTexto) {
   ahora.replaceChildren();
   ahora.appendChild(filaResumen("Cuentas por cobrar", porCobrar === null ? "—" : dinero.format(porCobrar)));
   if (esDueno) {
+    ahora.appendChild(filaResumen("Dinero invertido", invertido === null ? "—" : dinero.format(redondear(invertido))));
     if (dineroMano) {
       ahora.append(
-        filaResumen("Dinero invertido", dinero.format(redondear(dineroMano.invertido))),
         filaResumen("Dinero en cuenta", dinero.format(redondear(dineroMano.cuenta))),
         filaResumen("Dinero en efectivo", dinero.format(redondear(dineroMano.efectivo)))
       );

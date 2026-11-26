@@ -1,4 +1,4 @@
-// ===== configuracion.js: pantalla de Configuración (solo dueño) y dinero a mano =====
+// ===== configuracion.js: pantalla de Configuración (solo dueño): dinero en cuenta y en efectivo =====
 
 // Convierte lo escrito en pesos enteros. Vacío = 0. Devuelve null si no es un número válido
 function pesosDeTexto(texto) {
@@ -13,17 +13,21 @@ async function abrirConfiguracion() {
   aviso("msg-config", "");
   // Mientras no se carguen las cifras guardadas no se puede guardar (así no se borran por error)
   $("btn-guardar-dinero").disabled = true;
-  for (const id of ["dinero-cuenta", "dinero-efectivo", "dinero-invertido"]) $(id).value = "";
+  for (const id of ["dinero-cuenta", "dinero-efectivo"]) $(id).value = "";
+  $("invertido-nota").textContent = "";
   irA("configuracion");
 
-  const guardado = await leerDinero();
+  const [guardado, desde] = await Promise.all([leerDinero(), leerDesde()]);
   if (!guardado) {
     aviso("msg-config", "No se pudo cargar el dinero. Revisa tu internet e intenta otra vez.", "error");
     return;
   }
   $("dinero-cuenta").value = guardado.cuenta;
   $("dinero-efectivo").value = guardado.efectivo;
-  $("dinero-invertido").value = guardado.invertido;
+  $("invertido-nota").textContent = desde
+    ? "El dinero invertido se calcula solo: suma lo que costaron las recompras pagadas desde el " +
+      new Date(desde).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }) + "."
+    : "El dinero invertido se calcula solo, con las recompras pagadas.";
   $("btn-guardar-dinero").disabled = false;
 }
 
@@ -33,8 +37,7 @@ $("form-dinero").addEventListener("submit", async (e) => {
   e.preventDefault();
   const cuenta = pesosDeTexto($("dinero-cuenta").value);
   const efectivo = pesosDeTexto($("dinero-efectivo").value);
-  const invertido = pesosDeTexto($("dinero-invertido").value);
-  if (cuenta === null || efectivo === null || invertido === null) {
+  if (cuenta === null || efectivo === null) {
     aviso("msg-config", "Escribe solo números, sin letras ni signos.", "error");
     return;
   }
@@ -43,7 +46,7 @@ $("form-dinero").addEventListener("submit", async (e) => {
   boton.disabled = true;
   const { error } = await db
     .from("ajustes")
-    .upsert({ id: 1, dinero_cuenta: cuenta, dinero_efectivo: efectivo, dinero_invertido: invertido });
+    .upsert({ id: 1, dinero_cuenta: cuenta, dinero_efectivo: efectivo });
   boton.disabled = false;
 
   if (error) {
@@ -52,7 +55,6 @@ $("form-dinero").addEventListener("submit", async (e) => {
   }
   $("dinero-cuenta").value = cuenta;
   $("dinero-efectivo").value = efectivo;
-  $("dinero-invertido").value = invertido;
   aviso("msg-config", "Dinero guardado ✓", "ok");
   cargarResumenes(); // el resumen del Historial ya queda al día
 });

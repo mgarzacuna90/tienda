@@ -24,6 +24,7 @@ const vistas = {
   pago: $("vista-pago"),
   configuracion: $("vista-configuracion"),
   gastos: $("vista-gastos"),
+  porcliente: $("vista-porcliente"),
 };
 
 // Qué pestaña de abajo queda marcada en cada pantalla
@@ -38,6 +39,7 @@ const PESTANA = {
   pago: "vender",
   configuracion: "vender",
   gastos: "vender",
+  porcliente: "vender",
   productos: "productos",
   nuevoproducto: "productos",
   comprar: "productos",
