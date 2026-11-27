@@ -1,5 +1,7 @@
 // ===== comprar.js: lista de productos por comprar y registro de compras =====
 
+let fechasCaducidad = {}; // fecha de caducidad escrita para cada producto con caducidad: { idProducto: "AAAA-MM-DD" }
+
 function productosPorComprar() {
   return productos
     .filter(estaBajo)
@@ -15,7 +17,10 @@ function pintarComprar() {
 
   // Si un producto ya salió de la lista, olvidamos lo que se había escrito de él
   for (const id of Object.keys(compras)) {
-    if (!lista.some((p) => String(p.id) === id)) delete compras[id];
+    if (!lista.some((p) => String(p.id) === id)) {
+      delete compras[id];
+      delete fechasCaducidad[id];
+    }
   }
 
   const ul = $("lista-comprar");
@@ -72,6 +77,24 @@ function pintarComprar() {
     });
     li.appendChild(campo);
 
+    // Los productos con caducidad piden la fecha de lo que se compró (cada compra es un lote)
+    if (p.tiene_caducidad) {
+      const etiqueta = document.createElement("label");
+      etiqueta.className = "etiqueta-fecha";
+      etiqueta.htmlFor = "fecha-compra-" + p.id;
+      etiqueta.textContent = "Fecha de caducidad de lo que compraste";
+      const fecha = document.createElement("input");
+      fecha.type = "date";
+      fecha.id = "fecha-compra-" + p.id;
+      fecha.className = "campo-compra";
+      fecha.value = fechasCaducidad[p.id] || "";
+      fecha.addEventListener("input", () => {
+        if (fecha.value) fechasCaducidad[p.id] = fecha.value;
+        else delete fechasCaducidad[p.id];
+      });
+      li.append(etiqueta, fecha);
+    }
+
     ul.appendChild(li);
   }
 }
@@ -113,6 +136,19 @@ $("guardar-compras").addEventListener("click", async () => {
     if (cantidad > 0) items.push({ producto_id: Number(id), cantidad });
   }
 
+  // Cada compra de un producto con caducidad necesita su fecha: forma un lote nuevo
+  for (const it of items) {
+    const prod = productos.find((x) => x.id === it.producto_id);
+    if (prod && prod.tiene_caducidad) {
+      if (!fechasCaducidad[it.producto_id]) {
+        aviso("msg-comprar", "Escribe la fecha de caducidad de " + prod.nombre + ".", "error");
+        window.scrollTo(0, 0);
+        return;
+      }
+      it.caduca = fechasCaducidad[it.producto_id];
+    }
+  }
+
   if (items.length === 0) {
     aviso("msg-comprar", "Escribe cuántas piezas compraste de al menos un producto.", "error");
     window.scrollTo(0, 0);
@@ -149,6 +185,7 @@ $("guardar-compras").addEventListener("click", async () => {
   }
 
   compras = {};
+  fechasCaducidad = {};
   $("compra-costo").value = "";
   ponerPagada(null);
   await cargarProductos();

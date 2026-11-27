@@ -241,3 +241,8 @@ body.rol-vendedor button.js-salir:active { background: transparent; }
 /* ===== Compras por cliente (noviembre de 2026) ===== */
 .detalle-compras { margin-top: 0.5rem; padding-left: 0.6rem; border-left: 3px solid var(--borde); }
 .linea-compra { padding: 0.3rem 0; font-size: 0.85rem; }
+
+/* ===== Caducidad (noviembre de 2026) ===== */
+.vence { font-size: 0.85rem; font-weight: 700; }
+.vence.vencido { color: var(--error); }
+.etiqueta-fecha { display: block; margin-top: 0.6rem; font-size: 0.85rem; }

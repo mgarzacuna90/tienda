@@ -25,6 +25,7 @@ const vistas = {
   configuracion: $("vista-configuracion"),
   gastos: $("vista-gastos"),
   porcliente: $("vista-porcliente"),
+  caducar: $("vista-caducar"),
 };
 
 // Qué pestaña de abajo queda marcada en cada pantalla
@@ -44,6 +45,7 @@ const PESTANA = {
   nuevoproducto: "productos",
   comprar: "productos",
   pendientes: "productos",
+  caducar: "productos",
 };
 
 let productos = [];         // lista de productos que viene de la base de datos
