@@ -76,7 +76,7 @@ const estaBajo = (p) => p.cantidad < p.minimo || p.cantidad <= 0;
 async function cargarProductos() {
   let { data, error } = await db
     .from("productos")
-    .select("id, nombre, precio, cantidad, minimo, posicion, imagen_url, tiene_caducidad")
+    .select("id, nombre, precio, cantidad, minimo, posicion, imagen_url, caduca")
     .order("nombre", { ascending: true });
 
   // Respaldo: si la columna de caducidad aún no existe en la base, la app sigue vendiendo como siempre
@@ -214,64 +214,12 @@ function crearFormularioProducto(p) {
   llegaron.input.min = "0";
   llegaron.input.step = "1";
 
-  // ¿Tiene caducidad? Los productos con caducidad llevan su inventario por lotes (uno por cada fecha)
-  const tieneAntes = Boolean(p.tiene_caducidad);
-  let tieneAhora = tieneAntes;
-
-  const etiquetaCad = document.createElement("label");
-  etiquetaCad.textContent = "¿Tiene fecha de caducidad?";
-  const filaCad = document.createElement("div");
-  filaCad.className = "fila";
-  const cadSi = document.createElement("button");
-  cadSi.type = "button";
-  cadSi.textContent = "Sí";
-  const cadNo = document.createElement("button");
-  cadNo.type = "button";
-  cadNo.textContent = "No";
-  filaCad.append(cadSi, cadNo);
-
-  const notaLotes = document.createElement("p");
-  notaLotes.className = "detalle";
-  notaLotes.textContent =
-    "Este producto lleva su inventario por lotes. Para sumar piezas usa «Llegó mercancía» o Por comprar; para quitar las vencidas, Por caducar → Retirar.";
-
-  const bloqueFecha = document.createElement("div");
-  const etiquetaFecha = document.createElement("label");
-  etiquetaFecha.htmlFor = "edit-caduca";
-  const fechaCad = document.createElement("input");
-  fechaCad.type = "date";
-  fechaCad.id = "edit-caduca";
-  bloqueFecha.append(etiquetaFecha, fechaCad);
-
   const minimo = crearCampo("Inventario mínimo (avisa cuando haya menos)", "edit-minimo", "number", p.minimo);
+  // Fecha de caducidad del producto: una sola; Por comprar la reemplaza con la de cada compra nueva
+  const caduca = crearCampo("Fecha de caducidad (opcional)", "edit-caduca", "date", p.caduca || "");
   minimo.input.inputMode = "numeric";
   minimo.input.min = "0";
   minimo.input.step = "1";
-
-  // Muestra u oculta lo de la caducidad según lo elegido y lo escrito
-  function refrescarCaducidad() {
-    cadSi.classList.toggle("secundario", !tieneAhora);
-    cadNo.classList.toggle("secundario", tieneAhora);
-    cadSi.setAttribute("aria-pressed", String(tieneAhora));
-    cadNo.setAttribute("aria-pressed", String(!tieneAhora));
-
-    const porLotes = tieneAntes && tieneAhora; // la cantidad ya no se escribe a mano
-    inventario.input.disabled = porLotes;
-    notaLotes.hidden = !porLotes;
-
-    const llegan = parseInt(llegaron.input.value, 10) || 0;
-    const hayInventario = parseInt(inventario.input.value, 10) > 0;
-    const pideFecha = tieneAhora && (llegan > 0 || (!tieneAntes && hayInventario));
-    bloqueFecha.hidden = !pideFecha;
-    etiquetaFecha.textContent = tieneAntes
-      ? "Fecha de caducidad de lo que llegó"
-      : "Fecha de caducidad de las piezas que hay y las que llegaron";
-  }
-  cadSi.addEventListener("click", () => { tieneAhora = true; refrescarCaducidad(); });
-  cadNo.addEventListener("click", () => { tieneAhora = false; refrescarCaducidad(); });
-  llegaron.input.addEventListener("input", refrescarCaducidad);
-  inventario.input.addEventListener("input", refrescarCaducidad);
-  refrescarCaducidad();
 
   // Lugar en la pantalla de Vender: los 9 primeros cuadritos
   const etiquetaLugar = document.createElement("label");
@@ -316,10 +264,9 @@ function crearFormularioProducto(p) {
       nombre.etiqueta, nombre.input,
       precio.etiqueta, precio.input,
       inventario.etiqueta, inventario.input,
-      notaLotes,
       llegaron.etiqueta, llegaron.input,
-      etiquetaCad, filaCad, bloqueFecha,
       minimo.etiqueta, minimo.input,
+      caduca.etiqueta, caduca.input,
       etiquetaLugar, lugar,
       botones, eliminar,
     ].filter(Boolean)
@@ -329,25 +276,12 @@ function crearFormularioProducto(p) {
     e.preventDefault();
     const nuevoNombre = nombre.input.value.trim();
     const nuevoPrecio = redondear(precio.input.value);
-    const llegan = parseInt(llegaron.input.value, 10) || 0;
-    // Con caducidad la cantidad la llevan los lotes: se parte de la que ya tiene el producto
-    const base = tieneAntes ? p.cantidad : parseInt(inventario.input.value, 10);
-    const nuevaCantidad = base + llegan;
+    const nuevaCantidad = parseInt(inventario.input.value, 10) + (parseInt(llegaron.input.value, 10) || 0);
     const nuevoMinimo = parseInt(minimo.input.value, 10) || 0;
-    const fecha = fechaCad.value;
 
     if (!nuevoNombre || !(nuevoPrecio >= 0) || !Number.isFinite(nuevaCantidad) || nuevoMinimo < 0) {
       aviso("msg-editar", "Revisa los datos: el nombre, el precio y la cantidad deben estar completos.", "error");
       window.scrollTo(0, 0);
-      return;
-    }
-    if (tieneAhora && (llegan > 0 || (!tieneAntes && base > 0)) && !fecha) {
-      aviso("msg-editar", "Escribe la fecha de caducidad.", "error");
-      window.scrollTo(0, 0);
-      return;
-    }
-    if (tieneAntes && !tieneAhora &&
-        !window.confirm("Se borrarán las fechas de caducidad de " + p.nombre + ". ¿Continuar?")) {
       return;
     }
 
@@ -366,12 +300,15 @@ function crearFormularioProducto(p) {
       return;
     }
 
-    const cambios = { nombre: nuevoNombre, precio: nuevoPrecio, minimo: nuevoMinimo, imagen_url: nuevaFoto };
-    // Solo se manda la cantidad si el producto no queda con caducidad (con caducidad la llevan los lotes);
-    // si recién se activa la caducidad, se manda la que se escribió y de ahí sale su primer lote
-    if (tieneAhora !== tieneAntes) cambios.tiene_caducidad = tieneAhora;
-    if (!tieneAhora) cambios.cantidad = nuevaCantidad;
-    else if (!tieneAntes) cambios.cantidad = base;
+    const cambios = {
+      nombre: nuevoNombre,
+      precio: nuevoPrecio,
+      cantidad: nuevaCantidad,
+      minimo: nuevoMinimo,
+      imagen_url: nuevaFoto,
+    };
+    // Solo se manda la fecha si cambió (así guardar otros datos no depende de la columna nueva)
+    if (caduca.input.value !== (p.caduca || "")) cambios.caduca = caduca.input.value || null;
 
     const { error } = await db.from("productos").update(cambios).eq("id", p.id);
     guardar.disabled = false;
@@ -392,34 +329,14 @@ function crearFormularioProducto(p) {
       falloLugar = Boolean(errorLugar);
     }
 
-    // Lotes: se borran si ya no tiene caducidad; se crean al activarla o cuando llega mercancía
-    let falloLotes = false;
-    if (tieneAntes && !tieneAhora) {
-      const { error: errorBorrar } = await db.from("lotes").delete().eq("producto_id", p.id);
-      falloLotes = Boolean(errorBorrar);
-    }
-    if (tieneAhora && !tieneAntes && base > 0) {
-      const { error: errorLote } = await db.rpc("agregar_lote", { p_producto_id: p.id, p_caduca: fecha });
-      falloLotes = falloLotes || Boolean(errorLote);
-    }
-    if (tieneAhora && llegan > 0) {
-      const { error: errorLlego } = await db.rpc("agregar_lote", {
-        p_producto_id: p.id, p_caduca: fecha, p_cantidad: llegan, p_sumar: true,
-      });
-      falloLotes = falloLotes || Boolean(errorLlego);
-    }
-
     editandoId = null;
     await cargarProductos();
-    const actual = productos.find((x) => x.id === p.id);
-    if (falloLotes) {
-      aviso("msg-editar", "Se guardaron los cambios, pero no se pudo registrar la fecha de caducidad. Abre el producto y vuelve a intentarlo.", "error");
-    } else if (falloLugar) {
+    if (falloLugar) {
       aviso("msg-editar", "Se guardaron los cambios, pero no se pudo cambiar el lugar en Vender. Intenta otra vez.", "error");
     } else {
       aviso(
         "msg-editar",
-        "Cambios guardados ✓ " + nuevoNombre + ": " + dinero.format(nuevoPrecio) + ", inventario " + (actual ? actual.cantidad : nuevaCantidad) + ".",
+        "Cambios guardados ✓ " + nuevoNombre + ": " + dinero.format(nuevoPrecio) + ", inventario " + nuevaCantidad + ".",
         "ok"
       );
     }
@@ -451,33 +368,8 @@ function crearFormularioProducto(p) {
 }
 
 // ---------- Agregar un producto nuevo ----------
-let altaCaduca = null; // null = sin elegir, true = tiene caducidad, false = no tiene
-
-function ponerCaducidadAlta(valor) {
-  altaCaduca = valor;
-  $("caduca-si").classList.toggle("secundario", valor !== true);
-  $("caduca-no").classList.toggle("secundario", valor !== false);
-  $("caduca-si").setAttribute("aria-pressed", String(valor === true));
-  $("caduca-no").setAttribute("aria-pressed", String(valor === false));
-  $("bloque-caducidad").hidden = valor !== true;
-}
-$("caduca-si").addEventListener("click", () => ponerCaducidadAlta(true));
-$("caduca-no").addEventListener("click", () => ponerCaducidadAlta(false));
-
 $("form-agregar").addEventListener("submit", async (e) => {
   e.preventDefault();
-
-  const cantidadInicial = parseInt($("cantidad").value, 10);
-  const fechaCaducidad = $("fecha-caducidad").value;
-  if (altaCaduca === null) {
-    aviso("msg-agregar", "Elige si el producto tiene fecha de caducidad: Sí o No.", "error");
-    return;
-  }
-  if (altaCaduca && cantidadInicial > 0 && !fechaCaducidad) {
-    aviso("msg-agregar", "Escribe la fecha de caducidad de las piezas que vas a guardar.", "error");
-    return;
-  }
-
   const boton = $("btn-guardar");
   boton.disabled = true;
   aviso("msg-agregar", "Guardando…");
@@ -492,40 +384,21 @@ $("form-agregar").addEventListener("submit", async (e) => {
     return;
   }
 
-  const { data: nuevo, error } = await db
-    .from("productos")
-    .insert({
-      nombre: $("nombre").value.trim(),
-      precio: redondear($("precio").value),
-      cantidad: cantidadInicial,
-      minimo: parseInt($("minimo").value, 10) || 0,
-      imagen_url: imagenUrl,
-      tiene_caducidad: altaCaduca,
-    })
-    .select("id")
-    .single();
+  const { error } = await db.from("productos").insert({
+    nombre: $("nombre").value.trim(),
+    precio: redondear($("precio").value),
+    cantidad: parseInt($("cantidad").value, 10),
+    minimo: parseInt($("minimo").value, 10) || 0,
+    imagen_url: imagenUrl,
+  });
 
-  if (error || !nuevo) {
-    boton.disabled = false;
+  boton.disabled = false;
+  if (error) {
     aviso("msg-agregar", "No se pudo guardar el producto. Intenta otra vez.", "error");
     return;
   }
 
-  // Con caducidad, las piezas iniciales forman el primer lote. Si falla, no se deja el producto a medias.
-  if (altaCaduca && cantidadInicial > 0) {
-    const { error: errorLote } = await db.rpc("agregar_lote", { p_producto_id: nuevo.id, p_caduca: fechaCaducidad });
-    if (errorLote) {
-      await db.from("productos").delete().eq("id", nuevo.id);
-      if (imagenUrl) borrarFoto(imagenUrl).catch(() => {});
-      boton.disabled = false;
-      aviso("msg-agregar", "No se pudo guardar la fecha de caducidad, así que el producto no se guardó. Intenta otra vez.", "error");
-      return;
-    }
-  }
-
-  boton.disabled = false;
   $("form-agregar").reset();
-  ponerCaducidadAlta(null);
   aviso("msg-agregar", "Producto guardado ✓ Puedes agregar otro.", "ok");
   $("nombre").focus();
   cargarProductos();
@@ -534,7 +407,6 @@ $("form-agregar").addEventListener("submit", async (e) => {
 // ---------- Pantalla "Nuevo producto" ----------
 $("ir-nuevo-producto").addEventListener("click", () => {
   $("form-agregar").reset();
-  ponerCaducidadAlta(null);
   aviso("msg-agregar", "");
   irA("nuevoproducto");
 });

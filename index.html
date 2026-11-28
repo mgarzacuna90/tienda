@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=1">
 <link rel="stylesheet" href="historial.css?v=1">
 <link rel="stylesheet" href="vender.css?v=2">
-<link rel="stylesheet" href="extras.css?v=11">
+<link rel="stylesheet" href="extras.css?v=12">
 </head>
 <body class="rol-vendedor">
 <main>
@@ -234,15 +234,6 @@
       </div>
       <label for="minimo">Inventario mínimo (opcional)</label>
       <input id="minimo" type="number" inputmode="numeric" min="0" step="1">
-      <label>¿Tiene fecha de caducidad?</label>
-      <div class="fila">
-        <button type="button" id="caduca-si" class="secundario" aria-pressed="false">Sí</button>
-        <button type="button" id="caduca-no" class="secundario" aria-pressed="false">No</button>
-      </div>
-      <div id="bloque-caducidad" hidden>
-        <label for="fecha-caducidad">Fecha de caducidad de estas piezas</label>
-        <input id="fecha-caducidad" type="date">
-      </div>
       <button class="grande" type="submit" id="btn-guardar">Guardar producto</button>
       <p id="msg-agregar" class="mensaje" role="status"></p>
     </form>
@@ -262,15 +253,14 @@
 
     <div class="panel">
       <div class="barra-acciones">
-        <button class="secundario" type="button" id="llenar-faltantes">Llenar con lo que falta</button>
-        <button class="secundario" type="button" id="enviar-lista">Enviar lista de productos</button>
+        <button class="secundario" type="button" id="enviar-lista">Lista de faltantes</button>
       </div>
       <div id="elegir-destinatario" class="subform" hidden style="margin-bottom: 1rem;">
         <p class="detalle" style="margin-top: 0;">¿A quién le envías la lista?</p>
         <div id="botones-destinatario"></div>
         <button class="grande secundario" type="button" id="cancelar-destinatario">Cancelar</button>
       </div>
-      <ul id="lista-comprar" class="lista"></ul>
+      <div id="lista-comprar" class="tabla-scroll"></div>
     </div>
 
     <div id="datos-compra" class="panel" hidden>
@@ -381,7 +371,7 @@
     </div>
   </section>
 
-  <!-- PANTALLA: lotes por caducar (solo dueño) -->
+  <!-- PANTALLA: productos por caducar (solo dueño) -->
   <section id="vista-caducar" class="admin" hidden>
     <div class="encabezado">
       <h1>Por caducar</h1>
@@ -392,7 +382,7 @@
     <p id="msg-caducar" class="mensaje" role="status"></p>
 
     <div class="panel">
-      <p class="detalle" style="margin-top: 0;">Lotes que vencen en 7 días o menos, y los que ya vencieron.</p>
+      <p class="detalle" style="margin-top: 0;">Productos con existencia que vencen en 7 días o menos, y los que ya vencieron.</p>
       <ul id="lista-caducar" class="lista"></ul>
     </div>
   </section>
@@ -459,7 +449,7 @@
 <script src="ventas.js?v=6"></script>
 <script src="clientes.js?v=10"></script>
 <script src="cuenta.js?v=5"></script>
-<script src="comprar.js?v=7"></script>
+<script src="comprar.js?v=8"></script>
 <script src="pendientes.js?v=1"></script>
 <script src="historial.js?v=8"></script>
 <script src="resumen.js?v=2"></script>

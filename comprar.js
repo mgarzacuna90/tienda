@@ -1,6 +1,12 @@
 // ===== comprar.js: lista de productos por comprar y registro de compras =====
 
-let fechasCaducidad = {}; // fecha de caducidad escrita para cada producto con caducidad: { idProducto: "AAAA-MM-DD" }
+let fechasCaducidad = {}; // fecha de caducidad escrita para cada producto comprado: { idProducto: "AAAA-MM-DD" }
+
+// "AAAA-MM-DD" -> "15 dic 2026"
+function textoFechaCorta(texto) {
+  const [anio, mes, dia] = texto.split("-").map(Number);
+  return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
+}
 
 function productosPorComprar() {
   return productos
@@ -23,95 +29,96 @@ function pintarComprar() {
     }
   }
 
-  const ul = $("lista-comprar");
-  ul.replaceChildren();
+  const contenedor = $("lista-comprar");
+  contenedor.replaceChildren();
   $("guardar-compras").hidden = lista.length === 0;
   $("datos-compra").hidden = lista.length === 0;
 
   if (lista.length === 0) {
-    const vacio = document.createElement("li");
+    const vacio = document.createElement("p");
     vacio.className = "vacio";
     vacio.textContent = "Todo en orden: no hay productos por comprar.";
-    ul.appendChild(vacio);
+    contenedor.appendChild(vacio);
     return;
   }
 
+  // Tabla: Producto | Inventario | Comprados | Caducidad
+  const tabla = document.createElement("table");
+  tabla.className = "tabla-comprar";
+  const columnas = document.createElement("colgroup");
+  for (const ancho of ["19%", "20%", "19%", "42%"]) {
+    const col = document.createElement("col");
+    col.style.width = ancho;
+    columnas.appendChild(col);
+  }
+  tabla.appendChild(columnas);
+  const encabezado = document.createElement("tr");
+  for (const [titulo, clase] of [["Producto", ""], ["Inventario", "num"], ["Comprados", "num"], ["Caducidad", ""]]) {
+    const th = document.createElement("th");
+    th.textContent = titulo;
+    if (clase) th.className = clase;
+    encabezado.appendChild(th);
+  }
+  const cabeza = document.createElement("thead");
+  cabeza.appendChild(encabezado);
+  tabla.appendChild(cabeza);
+
+  const cuerpo = document.createElement("tbody");
   for (const p of lista) {
-    const li = document.createElement("li");
-    li.className = "item";
+    const fila = document.createElement("tr");
 
-    const fila = document.createElement("div");
-    fila.className = "fila-item";
+    const celdaNombre = document.createElement("td");
+    celdaNombre.textContent = p.nombre;
 
-    const izquierda = document.createElement("div");
-    izquierda.className = "con-foto";
-    const textos = document.createElement("div");
-    const nombre = document.createElement("div");
-    nombre.className = "nombre";
-    nombre.textContent = p.nombre;
-    const detalle = document.createElement("div");
-    detalle.className = "detalle inv-bajo";
-    detalle.textContent = "Inventario: " + p.cantidad + (p.minimo > 0 ? " · Mínimo: " + p.minimo : "");
-    textos.append(nombre, detalle);
-    izquierda.append(crearMiniatura(p, "foto-chica"), textos);
+    const celdaInventario = document.createElement("td");
+    celdaInventario.className = "num" + (p.cantidad <= 0 ? " inv-cero" : "");
+    celdaInventario.textContent = String(p.cantidad);
 
-    const faltan = document.createElement("div");
-    faltan.className = "precio";
-    faltan.textContent = p.faltan > 0 ? "Faltan " + p.faltan : "Sin inventario";
-
-    fila.append(izquierda, faltan);
-    li.appendChild(fila);
-
+    // Comprados: lo que se compró de este producto
+    const celdaComprados = document.createElement("td");
     const campo = document.createElement("input");
     campo.type = "number";
     campo.inputMode = "numeric";
     campo.min = "1";
     campo.step = "1";
-    campo.className = "campo-compra";
-    campo.placeholder = "¿Cuántos compraste?";
     campo.setAttribute("aria-label", "Cantidad que compraste de " + p.nombre);
     campo.value = compras[p.id] || "";
     campo.addEventListener("input", () => {
       if (campo.value) compras[p.id] = campo.value;
       else delete compras[p.id];
     });
-    li.appendChild(campo);
+    celdaComprados.appendChild(campo);
 
-    // Los productos con caducidad piden la fecha de lo que se compró (cada compra es un lote)
-    if (p.tiene_caducidad) {
-      const etiqueta = document.createElement("label");
-      etiqueta.className = "etiqueta-fecha";
-      etiqueta.htmlFor = "fecha-compra-" + p.id;
-      etiqueta.textContent = "Fecha de caducidad de lo que compraste";
-      const fecha = document.createElement("input");
-      fecha.type = "date";
-      fecha.id = "fecha-compra-" + p.id;
-      fecha.className = "campo-compra";
-      fecha.value = fechasCaducidad[p.id] || "";
-      fecha.addEventListener("input", () => {
-        if (fecha.value) fechasCaducidad[p.id] = fecha.value;
-        else delete fechasCaducidad[p.id];
-      });
-      li.append(etiqueta, fecha);
+    // Caducidad: la fecha de lo que se compró; reemplaza a la anterior (que se muestra en gris)
+    const celdaCaducidad = document.createElement("td");
+    const fecha = document.createElement("input");
+    fecha.type = "date";
+    fecha.id = "fecha-compra-" + p.id;
+    fecha.setAttribute("aria-label", "Fecha de caducidad de lo que compraste de " + p.nombre);
+    fecha.value = fechasCaducidad[p.id] || "";
+    fecha.addEventListener("input", () => {
+      if (fecha.value) fechasCaducidad[p.id] = fecha.value;
+      else delete fechasCaducidad[p.id];
+    });
+    celdaCaducidad.appendChild(fecha);
+    if (p.caduca) {
+      const antes = document.createElement("div");
+      antes.className = "fecha-anterior";
+      antes.textContent = "Antes: " + textoFechaCorta(p.caduca);
+      celdaCaducidad.appendChild(antes);
     }
 
-    ul.appendChild(li);
+    fila.append(celdaNombre, celdaInventario, celdaComprados, celdaCaducidad);
+    cuerpo.appendChild(fila);
   }
+  tabla.appendChild(cuerpo);
+  contenedor.appendChild(tabla);
 }
 
 $("ir-comprar").addEventListener("click", () => {
   aviso("msg-comprar", "");
   cerrarDestinatarios();
   irA("comprar");
-});
-
-// Llena cada casilla con lo que falta para llegar al mínimo
-$("llenar-faltantes").addEventListener("click", () => {
-  for (const p of productosPorComprar()) {
-    if (p.faltan > 0) compras[p.id] = String(p.faltan);
-  }
-  aviso("msg-comprar", "");
-  pintarComprar();
 });
 
 // ---------- ¿Ya se pagó la compra? ----------
@@ -136,17 +143,15 @@ $("guardar-compras").addEventListener("click", async () => {
     if (cantidad > 0) items.push({ producto_id: Number(id), cantidad });
   }
 
-  // Cada compra de un producto con caducidad necesita su fecha: forma un lote nuevo
+  // Todos los productos caducan: cada compra lleva su fecha, que reemplaza a la anterior
   for (const it of items) {
-    const prod = productos.find((x) => x.id === it.producto_id);
-    if (prod && prod.tiene_caducidad) {
-      if (!fechasCaducidad[it.producto_id]) {
-        aviso("msg-comprar", "Escribe la fecha de caducidad de " + prod.nombre + ".", "error");
-        window.scrollTo(0, 0);
-        return;
-      }
-      it.caduca = fechasCaducidad[it.producto_id];
+    if (!fechasCaducidad[it.producto_id]) {
+      const prod = productos.find((x) => x.id === it.producto_id);
+      aviso("msg-comprar", "Escribe la fecha de caducidad de " + (prod ? prod.nombre : "cada producto") + ".", "error");
+      window.scrollTo(0, 0);
+      return;
     }
+    it.caduca = fechasCaducidad[it.producto_id];
   }
 
   if (items.length === 0) {
