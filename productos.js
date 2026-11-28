@@ -73,19 +73,31 @@ function crearMiniatura(p, clase) {
 const estaBajo = (p) => p.cantidad < p.minimo || p.cantidad <= 0;
 
 // ---------- Leer productos ----------
-async function cargarProductos() {
-  let { data, error } = await db
-    .from("productos")
-    .select("id, nombre, precio, cantidad, minimo, posicion, imagen_url, caduca")
-    .order("nombre", { ascending: true });
+// Lotes con piezas de cada producto (solo el dueño los lee): { idProducto: [{ id, caduca, cantidad }, ...] }, del que vence primero al último
+let lotesPorProducto = {};
 
-  // Respaldo: si la columna de caducidad aún no existe en la base, la app sigue vendiendo como siempre
-  if (error) {
-    ({ data, error } = await db
-      .from("productos")
-      .select("id, nombre, precio, cantidad, minimo, posicion, imagen_url")
-      .order("nombre", { ascending: true }));
-  }
+async function cargarLotes() {
+  lotesPorProducto = {};
+  if (!esDueno) return;
+  const { data, error } = await db
+    .from("lotes")
+    .select("id, producto_id, caduca, cantidad")
+    .gt("cantidad", 0)
+    .order("caduca", { ascending: true });
+  if (error || !data) return; // si falla, la app sigue funcionando sin la información de lotes
+  for (const l of data) (lotesPorProducto[l.producto_id] = lotesPorProducto[l.producto_id] || []).push(l);
+}
+
+// Piezas de un producto que tienen fecha de caducidad (suma de sus lotes)
+function piezasConFecha(idProducto) {
+  return (lotesPorProducto[idProducto] || []).reduce((suma, l) => suma + l.cantidad, 0);
+}
+
+async function cargarProductos() {
+  const { data, error } = await db
+    .from("productos")
+    .select("id, nombre, precio, cantidad, minimo, posicion, imagen_url")
+    .order("nombre", { ascending: true });
 
   if (error) {
     aviso("msg-lista", "No se pudo cargar la lista. Revisa tu internet e intenta otra vez.", "error");
@@ -93,6 +105,7 @@ async function cargarProductos() {
   }
   aviso("msg-lista", "");
   productos = data;
+  await cargarLotes();
 
   // Si un producto ya no existe, lo quitamos de la venta en curso.
   for (const id of Object.keys(carrito)) {
@@ -214,9 +227,42 @@ function crearFormularioProducto(p) {
   llegaron.input.min = "0";
   llegaron.input.step = "1";
 
+  // Caducidad por lotes: cada compra con fecha forma un lote; al vender se descuenta primero del que vence antes
+  const conFecha = piezasConFecha(p.id);
+  const sinFecha = Math.max(p.cantidad - conFecha, 0);
+  const notaInventario = document.createElement("p");
+  notaInventario.className = "detalle";
+  notaInventario.style.marginTop = "-0.5rem";
+  notaInventario.textContent =
+    "Con fecha de caducidad: " + conFecha + " · Sin fecha: " + sinFecha +
+    ". Si bajas el inventario, se descuenta primero de los lotes que vencen antes.";
+
+  let fechaSinFecha = null;
+  let etiquetaSinFecha = null;
+  if (sinFecha > 0) {
+    etiquetaSinFecha = document.createElement("label");
+    etiquetaSinFecha.htmlFor = "edit-fecha-sinfecha";
+    etiquetaSinFecha.textContent =
+      "Fecha de caducidad de " + (sinFecha === 1 ? "la pieza sin fecha" : "las " + sinFecha + " piezas sin fecha") + " (opcional)";
+    fechaSinFecha = document.createElement("input");
+    fechaSinFecha.type = "date";
+    fechaSinFecha.id = "edit-fecha-sinfecha";
+  }
+
+  const etiquetaFechaLlegaron = document.createElement("label");
+  etiquetaFechaLlegaron.htmlFor = "edit-fecha-llegaron";
+  etiquetaFechaLlegaron.textContent = "Fecha de caducidad de lo que llegó";
+  const fechaLlegaron = document.createElement("input");
+  fechaLlegaron.type = "date";
+  fechaLlegaron.id = "edit-fecha-llegaron";
+  const bloqueLlegaron = document.createElement("div");
+  bloqueLlegaron.hidden = true;
+  bloqueLlegaron.append(etiquetaFechaLlegaron, fechaLlegaron);
+  llegaron.input.addEventListener("input", () => {
+    bloqueLlegaron.hidden = !((parseInt(llegaron.input.value, 10) || 0) > 0);
+  });
+
   const minimo = crearCampo("Inventario mínimo (avisa cuando haya menos)", "edit-minimo", "number", p.minimo);
-  // Fecha de caducidad del producto: una sola; Por comprar la reemplaza con la de cada compra nueva
-  const caduca = crearCampo("Fecha de caducidad (opcional)", "edit-caduca", "date", p.caduca || "");
   minimo.input.inputMode = "numeric";
   minimo.input.min = "0";
   minimo.input.step = "1";
@@ -263,10 +309,10 @@ function crearFormularioProducto(p) {
       vistaPrevia, foto.etiqueta, foto.input, quitar,
       nombre.etiqueta, nombre.input,
       precio.etiqueta, precio.input,
-      inventario.etiqueta, inventario.input,
-      llegaron.etiqueta, llegaron.input,
+      inventario.etiqueta, inventario.input, notaInventario,
+      etiquetaSinFecha, fechaSinFecha,
+      llegaron.etiqueta, llegaron.input, bloqueLlegaron,
       minimo.etiqueta, minimo.input,
-      caduca.etiqueta, caduca.input,
       etiquetaLugar, lugar,
       botones, eliminar,
     ].filter(Boolean)
@@ -276,11 +322,17 @@ function crearFormularioProducto(p) {
     e.preventDefault();
     const nuevoNombre = nombre.input.value.trim();
     const nuevoPrecio = redondear(precio.input.value);
-    const nuevaCantidad = parseInt(inventario.input.value, 10) + (parseInt(llegaron.input.value, 10) || 0);
+    const nuevoInventario = parseInt(inventario.input.value, 10);
+    const llegan = parseInt(llegaron.input.value, 10) || 0;
     const nuevoMinimo = parseInt(minimo.input.value, 10) || 0;
 
-    if (!nuevoNombre || !(nuevoPrecio >= 0) || !Number.isFinite(nuevaCantidad) || nuevoMinimo < 0) {
+    if (!nuevoNombre || !(nuevoPrecio >= 0) || !Number.isFinite(nuevoInventario) || nuevoMinimo < 0) {
       aviso("msg-editar", "Revisa los datos: el nombre, el precio y la cantidad deben estar completos.", "error");
+      window.scrollTo(0, 0);
+      return;
+    }
+    if (llegan > 0 && !fechaLlegaron.value) {
+      aviso("msg-editar", "Escribe la fecha de caducidad de lo que llegó.", "error");
       window.scrollTo(0, 0);
       return;
     }
@@ -300,17 +352,11 @@ function crearFormularioProducto(p) {
       return;
     }
 
-    const cambios = {
-      nombre: nuevoNombre,
-      precio: nuevoPrecio,
-      cantidad: nuevaCantidad,
-      minimo: nuevoMinimo,
-      imagen_url: nuevaFoto,
-    };
-    // Solo se manda la fecha si cambió (así guardar otros datos no depende de la columna nueva)
-    if (caduca.input.value !== (p.caduca || "")) cambios.caduca = caduca.input.value || null;
-
-    const { error } = await db.from("productos").update(cambios).eq("id", p.id);
+    // La cantidad no se guarda aquí: la cambian las funciones de abajo, que cuidan los lotes
+    const { error } = await db
+      .from("productos")
+      .update({ nombre: nuevoNombre, precio: nuevoPrecio, minimo: nuevoMinimo, imagen_url: nuevaFoto })
+      .eq("id", p.id);
     guardar.disabled = false;
 
     if (error) {
@@ -329,14 +375,35 @@ function crearFormularioProducto(p) {
       falloLugar = Boolean(errorLugar);
     }
 
+    // Inventario y lotes, en este orden: 1) el inventario escrito (si bajó, se descuenta de los lotes que vencen antes),
+    // 2) la fecha de las piezas sin fecha, 3) lo que llegó, que forma un lote nuevo
+    let falloLotes = false;
+    if (nuevoInventario !== p.cantidad) {
+      const { error: e1 } = await db.rpc("fijar_inventario", { p_producto_id: p.id, p_cantidad: nuevoInventario });
+      falloLotes = Boolean(e1);
+    }
+    if (!falloLotes && fechaSinFecha && fechaSinFecha.value) {
+      const { error: e2 } = await db.rpc("agregar_lote", { p_producto_id: p.id, p_caduca: fechaSinFecha.value });
+      falloLotes = Boolean(e2);
+    }
+    if (!falloLotes && llegan > 0) {
+      const { error: e3 } = await db.rpc("agregar_lote", {
+        p_producto_id: p.id, p_caduca: fechaLlegaron.value, p_cantidad: llegan, p_sumar: true,
+      });
+      falloLotes = Boolean(e3);
+    }
+
     editandoId = null;
     await cargarProductos();
-    if (falloLugar) {
+    const actual = productos.find((x) => x.id === p.id);
+    if (falloLotes) {
+      aviso("msg-editar", "Se guardaron los datos del producto, pero no el inventario o la fecha de caducidad. Abre el producto y revisa.", "error");
+    } else if (falloLugar) {
       aviso("msg-editar", "Se guardaron los cambios, pero no se pudo cambiar el lugar en Vender. Intenta otra vez.", "error");
     } else {
       aviso(
         "msg-editar",
-        "Cambios guardados ✓ " + nuevoNombre + ": " + dinero.format(nuevoPrecio) + ", inventario " + nuevaCantidad + ".",
+        "Cambios guardados ✓ " + nuevoNombre + ": " + dinero.format(nuevoPrecio) + ", inventario " + (actual ? actual.cantidad : nuevoInventario) + ".",
         "ok"
       );
     }

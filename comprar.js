@@ -89,7 +89,7 @@ function pintarComprar() {
     });
     celdaComprados.appendChild(campo);
 
-    // Caducidad: la fecha de lo que se compró; reemplaza a la anterior (que se muestra en gris)
+    // Caducidad: la fecha de lo que se compró; forma un lote nuevo y los anteriores se conservan
     const celdaCaducidad = document.createElement("td");
     const fecha = document.createElement("input");
     fecha.type = "date";
@@ -101,10 +101,12 @@ function pintarComprar() {
       else delete fechasCaducidad[p.id];
     });
     celdaCaducidad.appendChild(fecha);
-    if (p.caduca) {
+    // Los lotes que ya hay se conservan; se muestra la fecha del que vence primero
+    const lotes = lotesPorProducto[p.id] || [];
+    if (lotes.length > 0) {
       const antes = document.createElement("div");
       antes.className = "fecha-anterior";
-      antes.textContent = "Antes: " + textoFechaCorta(p.caduca);
+      antes.textContent = "Vence primero: " + textoFechaCorta(lotes[0].caduca);
       celdaCaducidad.appendChild(antes);
     }
 
@@ -143,7 +145,7 @@ $("guardar-compras").addEventListener("click", async () => {
     if (cantidad > 0) items.push({ producto_id: Number(id), cantidad });
   }
 
-  // Todos los productos caducan: cada compra lleva su fecha, que reemplaza a la anterior
+  // Todos los productos caducan: cada compra lleva su fecha y forma un lote nuevo
   for (const it of items) {
     if (!fechasCaducidad[it.producto_id]) {
       const prod = productos.find((x) => x.id === it.producto_id);
